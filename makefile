@@ -8,9 +8,9 @@ build_dir:
 	mkdir -p build/lib
 
 cs50:
-	make -C cs50 -j $(N)
+	make -C cs50
 	cp cs50/build/include/cs50.h build/include
-	cp cs50/lib/libcs50.a  build/lib
+	cp cs50/build/lib/libcs50.a  build/lib
 
 bearssl: build_dir
 	make -C bearssl-0.6 -j $(N)
