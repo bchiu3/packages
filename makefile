@@ -20,7 +20,7 @@ bearssl: build_dir
 curl: bearssl
 	cd curl-7.72.0 && ./build.sh
 	rm -f build/lib/libcurl.la
-	rm -f build/lib/pkgconfig
+	rm -rf build/lib/pkgconfig
 
 
 
