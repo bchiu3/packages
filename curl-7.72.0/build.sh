@@ -1,8 +1,8 @@
 #!/bin/bash -x
-export LDFLAGS=-L$(pwd)/../bearssl-0.6/build32 -static
+export LDFLAGS=-L$(pwd)/../build/lib -static
 export LIBS=-lbearssl
 export CFLAGS=-static
-export LT_SYS_LIBRARY_PATH=$(pwd)/../bearssl-0.6/build32
+export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 ./configure --disable-shared \
 			--enable-static \
 			--disable-dependency-tracking \
@@ -37,7 +37,6 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../bearssl-0.6/build32
 			--without-libidn \
 			--without-librtmp \
 			--disable-dnsshuffle \
-			--with-bearssl=/home/nwang/tmp/bearssl-0.6/build \
+			--with-bearssl=$(pwd)/../build \
 			--disable-verbose
-make clean
-make curl_LDFLAGS=-all-static -j 8
+make curl_LDFLAGS=-all-static -j $(nproc)
