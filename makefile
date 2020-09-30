@@ -25,4 +25,6 @@ clean:
 	rm -rf build
 	make -C cs50 clean
 	make -C bearssl-0.6 clean
-	cd curl-7.72.0 && make distclean
+	if [ -f curl-7.72.0/Makefile ]; then \
+		make -C curl-7.72.0 distclean; \
+	fi
