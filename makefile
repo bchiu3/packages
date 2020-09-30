@@ -1,5 +1,7 @@
 N=$(shell nproc)
 
+DEST ?=
+
 all: build_dir cs50 bearssl curl
 .PHONY: build_dir cs50 bearssl curl
 
@@ -22,8 +24,6 @@ curl: bearssl
 	rm -f build/lib/libcurl.la
 	rm -rf build/lib/pkgconfig
 
-
-
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -31,3 +31,7 @@ clean:
 	if [ -f curl-7.72.0/Makefile ]; then \
 		make -C curl-7.72.0 distclean; \
 	fi
+
+install:
+	cp -r build/include/* $(DEST)/usr/include
+	cp -r build/lib/*   $(DEST)/usr/lib
