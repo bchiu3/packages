@@ -13,11 +13,11 @@ bearssl:
 	make -C bearssl-0.6
 
 curl:
-	./curl-7.72.0/build.sh
+	cd curl-7.72.0 && ./build.sh && $(MAKE) curl_LDFLAGS=-all-static
 
 
 clean:
 	rm -rf build
 	make -C cs50 clean
 	make -C bearssl-0.6 clean
-	make -C curl-7.72.0 distclean
+	cd curl-7.72.0 && make distclean
