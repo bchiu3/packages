@@ -3,7 +3,12 @@ export LDFLAGS=-L$(pwd)/../build/lib -static
 export LIBS=-lbearssl
 export CFLAGS=-static
 export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
-./configure --disable-shared \
+./configure --prefix=$(pwd)/../build \
+			--libdir=$(pwd)/../build/lib \
+			--includedir=$(pwd)/../build/include \
+			--datadir=$(pwd)/../build/docs \
+			--datarootdir=$(pwd)/../build/docs \
+			--disable-shared \
 			--enable-static \
 			--disable-dependency-tracking \
 			--disable-ipv6 \
@@ -39,4 +44,6 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 			--disable-dnsshuffle \
 			--with-bearssl=$(pwd)/../build \
 			--disable-verbose
+
 make curl_LDFLAGS=-all-static -j $(nproc)
+make install
