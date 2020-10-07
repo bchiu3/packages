@@ -37,5 +37,5 @@ clean:
 	make -C zlib-1.2.11 distclean
 
 install:
-	cp -r build/include/* $(DEST)/usr/include
-	cp -r build/lib/*   $(DEST)/usr/lib
+	rsync -avz build/include/  $(DEST)/usr/include/
+	rsync -avz build/lib/      $(DEST)/usr/lib/
