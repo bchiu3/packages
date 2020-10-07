@@ -2,8 +2,8 @@ N=$(shell nproc)
 
 DEST ?=
 
-all: build_dir cs50 bearssl curl zlib
-.PHONY: build_dir cs50 bearssl curl zlib
+all: build_dir cs50 bearssl curl zlib sqlite
+.PHONY: build_dir cs50 bearssl curl zlib sqlite
 
 build_dir:
 	mkdir -p build/include
@@ -27,6 +27,9 @@ curl: bearssl
 zlib:
 	cd zlib-1.2.11 && ./build.sh
 
+sqlite:
+	cd sqlite-3.33.0 && ./build.sh
+
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -35,6 +38,7 @@ clean:
 		make -C curl-7.72.0 distclean; \
 	fi
 	make -C zlib-1.2.11 distclean
+	make -C sqlite-3.33.0 distclean
 
 install:
 	rsync -avz build/include/  $(DEST)/usr/include/
