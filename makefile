@@ -2,8 +2,8 @@ N=$(shell nproc)
 
 DEST ?=
 
-all: build_dir cs50 bearssl curl
-.PHONY: build_dir cs50 bearssl curl
+all: build_dir cs50 bearssl curl zlib
+.PHONY: build_dir cs50 bearssl curl zlib
 
 build_dir:
 	mkdir -p build/include
@@ -24,6 +24,9 @@ curl: bearssl
 	rm -f build/lib/libcurl.la
 	rm -rf build/lib/pkgconfig
 
+zlib:
+	cd zlib-1.2.11 && ./build.sh
+
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -31,6 +34,7 @@ clean:
 	if [ -f curl-7.72.0/Makefile ]; then \
 		make -C curl-7.72.0 distclean; \
 	fi
+	make -C zlib-1.2.11 distclean
 
 install:
 	cp -r build/include/* $(DEST)/usr/include
