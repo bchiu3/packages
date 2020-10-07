@@ -6,7 +6,8 @@ CFLAGS=-O0 ./configure \
 	  --libdir=${mypath}/../build/lib \
 	  --includedir=${mypath}/../build/include \
 	  --datadir=${mypath}/../build/docs \
-	  --disable-amalgamation
+	  --disable-amalgamation \
+    --disable-tcl
 
 make
 make install
