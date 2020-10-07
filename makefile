@@ -41,7 +41,9 @@ clean:
 		make -C curl-7.72.0 distclean; \
 	fi
 	make -C zlib-1.2.11 distclean
-	make -C sqlite-3.33.0 distclean
+	if [ -f sqlite-3.33.0/Makefile ]; then \
+		make -C sqlite-3.33.0 distclean; \
+	fi
 	if [ -f readline-8.0/Makefile ]; then \
 		make -C readline-8.0 distclean; \
 	fi
