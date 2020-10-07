@@ -7,3 +7,6 @@ CFLAGS=-O0 ./configure \
 	  --includedir=${mypath}/../build/include \
 	  --datadir=${mypath}/../build/docs \
 	  --disable-amalgamation
+
+make
+make install
