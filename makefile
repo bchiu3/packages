@@ -30,6 +30,9 @@ zlib:
 sqlite:
 	cd sqlite-3.33.0 && ./build.sh
 
+readline:
+	cd readline-8.0 && ./build.sh
+
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -39,6 +42,9 @@ clean:
 	fi
 	make -C zlib-1.2.11 distclean
 	make -C sqlite-3.33.0 distclean
+	if [ -f readline-8.0/Makefile ]; then \
+		make -C readline-8.0 distclean; \
+	fi
 
 install:
 	rsync -avz build/include/  $(DEST)/usr/include/
