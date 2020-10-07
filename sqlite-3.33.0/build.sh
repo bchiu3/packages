@@ -1,5 +1,5 @@
 #!/bin/bash
-mypath=$(dirname $(readlink) -f $0)
+mypath=$(dirname $(readlink -f $0))
 
 CFLAGS=-O0 ./configure \
 	  --prefix=${mypath}/../build \
