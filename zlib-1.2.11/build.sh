@@ -5,3 +5,6 @@ CFLAGS=-O0 ./configure \
 	  --includedir=${mypath}/../build/include \
 	  --libdir=${mypath}/../build/lib \
 	  -static
+make
+make test
+make install
