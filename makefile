@@ -2,7 +2,7 @@ N=$(shell nproc)
 
 DEST ?=
 
-all: build_dir cs50 bearssl curl zlib sqlite
+all: build_dir cs50 bearssl curl zlib  readline
 .PHONY: build_dir cs50 bearssl curl zlib sqlite
 
 build_dir:
