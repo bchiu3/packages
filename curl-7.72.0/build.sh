@@ -1,6 +1,6 @@
 #!/bin/bash -x
 export LDFLAGS=-L$(pwd)/../build/lib -static
-export LIBS=-lbearssl
+export LIBS=-lwolfssl
 export CFLAGS=-static
 export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 ./configure --prefix=$(pwd)/../build \
