@@ -10,6 +10,7 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 			--datadir=$(pwd)/../build/docs \
 			--datarootdir=$(pwd)/../build/docs \
 			--disable-shared \
+			--without-ssl \
 			--enable-static \
 			--disable-dependency-tracking \
 			--disable-ipv6 \
