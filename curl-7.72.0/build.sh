@@ -1,8 +1,8 @@
 #!/bin/bash -x
 export LDFLAGS=-L$(pwd)/../build/lib -static
-export LIBS=-lbearssl
 export CFLAGS=-static
 export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
+SSL="bearssl"
 ./configure --prefix=$(pwd)/../build \
 			--libdir=$(pwd)/../build/lib \
 			--includedir=$(pwd)/../build/include \
@@ -42,7 +42,7 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 			--without-libidn \
 			--without-librtmp \
 			--disable-dnsshuffle \
-			--with-bearssl=$(pwd)/../build \
+			--with-$(SSL)=$(pwd)/../build \
 			--disable-verbose
 
 make curl_LDFLAGS=-all-static -j $(nproc)

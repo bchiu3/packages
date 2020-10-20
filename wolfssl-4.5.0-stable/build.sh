@@ -4,9 +4,8 @@ mypath=$(dirname $(readlink -f $0))
 ./configure --prefix=$(pwd)/../build \
 			--libdir=$(pwd)/../build/lib \
 			--include=$(pwd)/../build/include \
-			--with-pic=non-PIC \
 			--enable-static=yes \
-			--enable-shared=no \
+			--enable-shared=yes \
 			--enable-debug=yes \
 			--enable-asm=no
 make -j 8
