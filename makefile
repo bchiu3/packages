@@ -2,8 +2,8 @@ N=$(shell nproc)
 
 DEST ?=
 
-all: build_dir cs50 bearssl curl zlib  readline
-.PHONY: build_dir cs50 bearssl curl zlib sqlite
+all: build_dir cs50 zlib readline bearssl wolfssl curl
+.PHONY: build_dir cs50 bearssl curl zlib sqlite wolfssl
 
 build_dir:
 	mkdir -p build/include
@@ -33,6 +33,9 @@ sqlite:
 readline:
 	cd readline-8.0 && ./build.sh
 
+wolfssl:
+	cd wolfssl-4.5.0-stable && ./build.sh
+
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -46,6 +49,9 @@ clean:
 	fi
 	if [ -f readline-8.0/Makefile ]; then \
 		make -C readline-8.0 distclean; \
+	fi
+	if [ -f wolfssl-4.5.0/Makefile ]; then \
+		make -C wolfssl-4.5.0 distclean; \
 	fi
 
 install:

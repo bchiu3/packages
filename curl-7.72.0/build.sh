@@ -42,7 +42,7 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 			--without-libidn \
 			--without-librtmp \
 			--disable-dnsshuffle \
-			--with-bearssl=$(pwd)/../build \
+			--with-wolfssl=$(pwd)/../build \
 			--disable-verbose
 
 make curl_LDFLAGS=-all-static -j $(nproc)
