@@ -7,6 +7,9 @@ mypath=$(dirname $(readlink -f $0))
 			--enable-static=yes \
 			--enable-shared=yes \
 			--enable-debug=yes \
-			--enable-asm=no
+			--enable-asm=no \
+			--enable-opensslextra \
+			--enable-harden
+
 make -j 8
 make install
