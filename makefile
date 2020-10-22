@@ -2,8 +2,10 @@ N=$(shell nproc)
 
 DEST ?=
 
-all: build_dir cs50 zlib readline bearssl wolfssl curl
-.PHONY: build_dir cs50 bearssl curl zlib sqlite wolfssl
+all: build_dir cs50 zlib readline ssl curl lws
+.PHONY: build_dir cs50 bearssl curl zlib sqlite wolfssl libressl lws
+
+ssl: bearssl wolfssl libressl
 
 build_dir:
 	mkdir -p build/include
@@ -36,6 +38,15 @@ readline:
 
 wolfssl:
 	cd wolfssl-4.5.0-stable && ./build.sh
+
+lws:
+	cd libwebsockets-2.4.2 && ./build.sh
+
+openssl:
+	cd openssl-1.1.1 && ./config no-asm
+
+libressl:
+	cd libressl-3.2.2 && ./build.sh
 
 clean:
 	rm -rf build
