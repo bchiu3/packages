@@ -2,8 +2,8 @@ N=$(shell nproc)
 
 DEST ?=
 
-all: build_dir cs50 zlib readline ssl curl lws
-.PHONY: build_dir cs50 bearssl curl zlib sqlite wolfssl libressl lws
+all: build_dir cs50 zlib ncurses readline ssl curl lws 
+.PHONY: build_dir cs50 ncurses bearssl curl zlib sqlite wolfssl libressl lws
 
 ssl: bearssl wolfssl libressl
 
@@ -15,6 +15,9 @@ cs50:
 	make -C cs50
 	cp cs50/build/include/cs50.h build/include
 	cp cs50/build/lib/libcs50.a  build/lib
+
+ncurses:
+	cd ncurses-6.2 && ./build.sh
 
 bearssl: build_dir
 	make -C bearssl-0.6 -j $(N)
@@ -64,6 +67,9 @@ clean:
 	fi
 	if [ -f wolfssl-4.5.0/Makefile ]; then \
 		make -C wolfssl-4.5.0 distclean; \
+	fi
+	if [ -f ncurses-6.2/Makefile ]; then \
+		make -C ncurses-6.2 distclean; \
 	fi
 
 install:
