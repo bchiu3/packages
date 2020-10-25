@@ -2,7 +2,7 @@ N=$(shell nproc)
 
 DEST ?=
 
-all: build_dir cs50 zlib ncurses readline ssl curl lws 
+all: build_dir cs50 zlib ncurses readline conio
 .PHONY: build_dir cs50 ncurses bearssl curl zlib sqlite wolfssl libressl lws
 
 ssl: bearssl wolfssl libressl
@@ -18,6 +18,9 @@ cs50:
 
 ncurses:
 	cd ncurses-6.2 && ./build.sh
+
+conio:
+	cp conio.h/conio.h build/include
 
 bearssl: build_dir
 	make -C bearssl-0.6 -j $(N)
