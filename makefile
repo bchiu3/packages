@@ -3,9 +3,9 @@ N=$(shell nproc)
 DEST ?=
 
 all: build_dir cs50 zlib ncurses readline conio
-.PHONY: build_dir cs50 ncurses bearssl curl zlib sqlite wolfssl libressl lws
+.PHONY: build_dir cs50 ncurses bearssl curl zlib sqlite wolfssl libressl lws mbedtls
 
-ssl: bearssl wolfssl libressl
+ssl: bearssl wolfssl libressl mbedtls
 
 build_dir:
 	mkdir -p build/include
@@ -53,6 +53,9 @@ openssl:
 
 libressl:
 	cd libressl-3.2.2 && ./build.sh
+
+mbedtls:
+	cd mbedtls-2.24.0 && ./build.sh
 
 clean:
 	rm -rf build
