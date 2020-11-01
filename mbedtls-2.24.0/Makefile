@@ -1,4 +1,4 @@
-DESTDIR=/usr/local
+DESTDIR ?=/usr/local
 PREFIX=mbedtls_
 
 .SILENT:
