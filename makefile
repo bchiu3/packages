@@ -3,9 +3,9 @@ N=$(shell nproc)
 DEST ?=
 
 all: build_dir cs50 zlib ncurses readline conio
-.PHONY: build_dir cs50 ncurses bearssl curl zlib sqlite wolfssl libressl lws mbedtls
+.PHONY: build_dir cs50 ncurses bearssl curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls
 
-ssl: bearssl wolfssl libressl mbedtls
+ssl: bearssl wolfssl libressl mbedtls termcap
 
 build_dir:
 	mkdir -p build/include
@@ -45,8 +45,11 @@ readline:
 wolfssl:
 	cd wolfssl-4.5.0-stable && ./build.sh
 
-lws:
+lws2:
 	cd libwebsockets-2.4.2 && ./build.sh
+
+lws3:
+	cd libwebsockets-3.2.2 && ./build.sh
 
 openssl:
 	cd openssl-1.1.1 && ./config no-asm
@@ -56,6 +59,9 @@ libressl:
 
 mbedtls:
 	cd mbedtls-2.24.0 && ./build.sh
+
+termcap:
+	cd termcap-1.3.1 && ./build.sh
 
 clean:
 	rm -rf build
