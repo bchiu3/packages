@@ -83,6 +83,9 @@ clean:
 	if [ -f ncurses-6.2/Makefile ]; then \
 		make -C ncurses-6.2 distclean; \
 	fi
+	if [ -f libressl-3.2.2/Makefile ]; then \
+		make -C libressl-3.2.2 distclean; \
+	fi
 
 install:
 	rsync -avz build/include/  $(DEST)/usr/include/
