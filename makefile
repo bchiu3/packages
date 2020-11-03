@@ -3,7 +3,7 @@ N=$(shell nproc)
 DEST ?=
 
 all: build_dir cs50 zlib ncurses readline conio
-.PHONY: build_dir cs50 ncurses bearssl curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls
+.PHONY: build_dir cs50 ncurses bearssl curl tiny-curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls
 
 ssl: bearssl wolfssl libressl mbedtls termcap
 
@@ -32,6 +32,13 @@ curl: bearssl
 	cd curl-7.72.0 && ./build.sh
 	rm -f build/lib/libcurl.la
 	rm -rf build/lib/pkgconfig
+
+
+tiny-curl: bearssl
+	cd tiny-curl-7.72.0 && ./build.sh
+	rm -f build/lib/libcurl.la
+	rm -rf build/lib/pkgconfig
+
 
 zlib:
 	cd zlib-1.2.11 && ./build.sh
@@ -69,6 +76,9 @@ clean:
 	make -C bearssl-0.6 clean
 	if [ -f curl-7.72.0/Makefile ]; then \
 		make -C curl-7.72.0 distclean; \
+	fi
+	if [ -f tiny-curl-7.72.0/Makefile ]; then \
+		make -C tiny-curl-7.72.0 distclean; \
 	fi
 	make -C zlib-1.2.11 distclean
 	if [ -f sqlite-3.33.0/Makefile ]; then \
