@@ -3,9 +3,9 @@ N=$(shell nproc)
 DEST ?=
 
 all: build_dir cs50 zlib ncurses readline conio
-.PHONY: build_dir cs50 ncurses bearssl curl tiny-curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls
+.PHONY: build_dir cs50 ncurses bearssl curl tiny-curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls openssl
 
-ssl: bearssl wolfssl libressl mbedtls termcap
+ssl: bearssl wolfssl libressl mbedtls termcap openssl
 
 build_dir:
 	mkdir -p build/include
@@ -59,7 +59,7 @@ lws3:
 	cd libwebsockets-3.2.2 && ./build.sh
 
 openssl:
-	cd openssl-1.1.1 && ./config no-asm
+	cd openssl-1.1.1i && ./build.sh
 
 libressl:
 	cd libressl-3.2.2 && ./build.sh
@@ -95,6 +95,9 @@ clean:
 	fi
 	if [ -f libressl-3.2.2/Makefile ]; then \
 		make -C libressl-3.2.2 distclean; \
+	fi
+	if [ -f openssl-1.1.1i/Makefile ]; then \
+		make -C openssl-1.1.1i distclean; \
 	fi
 
 install:
