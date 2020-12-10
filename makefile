@@ -40,7 +40,7 @@ tiny-curl: bearssl
 	rm -f build/lib/libcurl.la
 	rm -rf build/lib/pkgconfig
 
-curl-ws: curl
+curl-ws:
 	cd curl-websocket && ./build.sh
 
 zlib:
@@ -80,6 +80,7 @@ clean:
 	rm -rf build
 	make -C cs50 clean
 	make -C bearssl-0.6 clean
+	make -C curl-websocket clean
 	if [ -f curl-7.72.0/Makefile ]; then \
 		make -C curl-7.72.0 distclean; \
 	fi
