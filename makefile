@@ -3,7 +3,7 @@ N=$(shell nproc)
 DEST ?=
 
 all: build_dir cs50 zlib ncurses readline conio
-.PHONY: build_dir cs50 ncurses bearssl curl tiny-curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls openssl
+.PHONY: build_dir cs50 ncurses bearssl curl tiny-curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls openssl uv
 
 ssl: bearssl wolfssl libressl mbedtls termcap openssl
 
@@ -70,6 +70,9 @@ mbedtls:
 termcap:
 	cd termcap-1.3.1 && ./build.sh
 
+uv:
+	cd libuv-1.40.0 && ./build.sh
+
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -98,6 +101,9 @@ clean:
 	fi
 	if [ -f openssl-1.1.1i/Makefile ]; then \
 		make -C openssl-1.1.1i distclean; \
+	fi
+	if [ -f libuv-1.40.0/Makefile ]; then \
+		make -C libuv-1.40.0 distclean; \
 	fi
 
 install:
