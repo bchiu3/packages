@@ -1,5 +1,8 @@
 #!/bin/bash -x
 SSL="bearssl"
+SSL="mbedtls"
+SSL="wolfssl"
+SSL="ssl"
 export LDFLAGS=-L$(pwd)/../build/lib -static
 export LIBS=-l${SSL}
 export CFLAGS=-static
