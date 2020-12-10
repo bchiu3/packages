@@ -179,18 +179,16 @@ static void on_binary(void *data, CURL *easy, const void *mem, size_t len) {
 static void on_ping(void *data, CURL *easy, const char *reason, size_t len) {
     fprintf(stderr, "INFO: PING %zd bytes='%s'\n", len, reason);
     cws_pong(easy, "just pong", SIZE_MAX);
-    (void)data;
 }
 
 static void on_pong(void *data, CURL *easy, const char *reason, size_t len) {
     fprintf(stderr, "INFO: PONG %zd bytes='%s'\n", len, reason);
 
     cws_close(easy, CWS_CLOSE_REASON_NORMAL, "close it!", SIZE_MAX);
-    (void)data;
-    (void)easy;
 }
 
-static void on_close(void *data, CURL *easy, enum cws_close_reason reason, const char *reason_text, size_t reason_text_len) {
+static void on_close(void *data, CURL *easy, enum cws_close_reason reason,
+                     const char *reason_text, size_t reason_text_len) {
     struct myapp_ctx *ctx = data;
     fprintf(stderr, "INFO: CLOSE=%4d %zd bytes '%s'\n", reason, reason_text_len, reason_text);
 
@@ -244,9 +242,9 @@ int main(int argc, char *argv[]) {
         goto error_easy;
 
     /* here you should do any extra sets, like cookies, auth... */
-    curl_easy_setopt(myapp_ctx.easy, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_FOLLOWLOCATION, 0L);
     curl_easy_setopt(myapp_ctx.easy, CURLOPT_VERBOSE, 1L);
-    curl_easy_setopt(myapp_ctx.easy, CURLOPT_TIMEOUT, 500000L);
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_TIMEOUT, 0L);
     curl_easy_setopt(myapp_ctx.easy, CURLOPT_LOW_SPEED_TIME, 600L);
     curl_easy_setopt(myapp_ctx.easy, CURLOPT_LOW_SPEED_LIMIT, 30L);
 
