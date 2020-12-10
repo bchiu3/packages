@@ -356,7 +356,7 @@ bool cws_close(CURL *easy, enum cws_close_reason reason, const char *reason_text
         ERR("not CWS (no CURLINFO_PRIVATE): %p", easy);
         return false;
     }
-    curl_easy_setopt(easy, CURLOPT_TIMEOUT, 2);
+    curl_easy_setopt(easy, CURLOPT_TIMEOUT, 20L);
     priv = (struct cws_data *)p;
 
     if (reason == 0) {
