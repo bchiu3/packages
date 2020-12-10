@@ -65,7 +65,7 @@ static void a_main_loop(struct myapp_ctx *ctx) {
         FD_ZERO(&fdwrite);
         FD_ZERO(&fdexcep);
 
-        timeout.tv_sec = 1;
+        timeout.tv_sec = 20000L;
         timeout.tv_usec = 0;
 
         curl_multi_timeout(multi, &curl_timeo);
@@ -84,7 +84,7 @@ static void a_main_loop(struct myapp_ctx *ctx) {
         }
 
         if (maxfd == -1) {
-            struct timeval wait = { 1, 0 }; /* 1s */
+            struct timeval wait = { 2, 0 }; /* 1s */
             rc = select(0, NULL, NULL, NULL, &wait);
         } else {
             rc = select(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
@@ -246,6 +246,13 @@ int main(int argc, char *argv[]) {
     /* here you should do any extra sets, like cookies, auth... */
     curl_easy_setopt(myapp_ctx.easy, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(myapp_ctx.easy, CURLOPT_VERBOSE, 1L);
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_TIMEOUT, 500000L);
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_LOW_SPEED_TIME, 600L);
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_LOW_SPEED_LIMIT, 30L);
+
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_TCP_KEEPALIVE, 1L);
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_TCP_KEEPIDLE, 1200L);
+    curl_easy_setopt(myapp_ctx.easy, CURLOPT_TCP_KEEPINTVL, 60L);
 
     /*
      * This is a traditional curl_multi app, see:
