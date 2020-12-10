@@ -41,7 +41,7 @@ tiny-curl: bearssl
 	rm -rf build/lib/pkgconfig
 
 curl-ws:
-	cd curl-websocket && ./build.sh
+	make -C curl-websocket 
 
 zlib:
 	cd zlib-1.2.11 && ./build.sh
