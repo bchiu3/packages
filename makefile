@@ -25,8 +25,7 @@ conio:
 
 bearssl: build_dir
 	make -C bearssl-0.6 -j $(N)
-	cp bearssl-0.6/build32/libbearssl.a build/lib
-	cp bearssl-0.6/build32/libbearssl.so build/lib
+	cp bearssl-0.6/build/libbearssl.a build/lib
 	cp bearssl-0.6/inc/* build/include
 
 curl: bearssl
