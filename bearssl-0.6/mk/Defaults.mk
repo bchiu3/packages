@@ -36,6 +36,7 @@ TESTX509 = $(BUILD)$Ptestx509$E
 INCFLAGS = -Isrc -Iinc
 T0COMP = T0Comp.exe
 STATICLIB = lib
-DLL = dll
+#disable shared lib
+#DLL = dll
 TOOLS = tools
 TESTS = tests
