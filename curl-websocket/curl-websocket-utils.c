@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <openssl/evp.h>
+#include <bearssl_hash.h>
 
 static inline void _cws_debug(const char *prefix, const void *buffer, size_t len)
 {
@@ -41,6 +41,7 @@ static inline void _cws_debug(const char *prefix, const void *buffer, size_t len
 }
 
 static void _cws_sha1(const void *input, const size_t input_len, void *output) {
+#if 0
     static const EVP_MD *md = NULL;
     EVP_MD_CTX * ctx;
 
@@ -59,6 +60,11 @@ static void _cws_sha1(const void *input, const size_t input_len, void *output) {
 
     EVP_MD_CTX_cleanup(ctx);
 	EVP_MD_CTX_free(ctx);
+#endif
+    br_sha1_context cxt;
+    br_sha1_init(&cxt);
+    br_sha1_update(&cxt, input, input_len);
+    br_sha1_out(&cxt, output);
 }
 
 static void _cws_encode_base64(const uint8_t *input, const size_t input_len, char *output)

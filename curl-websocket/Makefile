@@ -2,12 +2,12 @@ LIBCURL_CFLAGS := -I$(shell pwd)/../build/include
 LIBCURL_LDFLAGS := -L$(shell pwd)/../build/lib  -lcurl -static
 
 LIBOPENSSL_CFLAGS := -I$(shell pwd)/../build/include
-LIBOPENSSL_LDFLAGS := -L$(shell pwd)/../build/lib -lssl -static
+LIBOPENSSL_LDFLAGS := -L$(shell pwd)/../build/lib -lbearssl -static
 
 ifeq ($(DEBUG),1)
 CFLAGS ?= -Wall -Wextra -O0 -ggdb3
 else
-CFLAGS ?= -Wall -Wextra -O1 
+CFLAGS ?= -Wall -Wextra -O0 -g 
 endif
 
 LIBS_CFLAGS := $(LIBCURL_CFLAGS) $(LIBOPENSSL_CFLAGS)
