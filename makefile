@@ -3,7 +3,8 @@ N=$(shell nproc)
 DEST ?=
 
 all: build_dir cs50 zlib ncurses readline conio
-.PHONY: build_dir cs50 ncurses bearssl curl tiny-curl zlib sqlite wolfssl libressl lws2 lws3 mbedtls openssl uv
+.PHONY: build_dir cs50 ncurses bearssl curl tiny-curl \
+	    zlib sqlite wolfssl libressl lws2 lws3 mbedtls openssl uv
 
 ssl: bearssl wolfssl libressl mbedtls termcap openssl
 
@@ -39,6 +40,8 @@ tiny-curl: bearssl
 	rm -f build/lib/libcurl.la
 	rm -rf build/lib/pkgconfig
 
+curl-ws: curl
+	cd curl-websocket && ./build.sh
 
 zlib:
 	cd zlib-1.2.11 && ./build.sh
