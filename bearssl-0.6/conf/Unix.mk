@@ -48,7 +48,8 @@ AROUT =
 
 # DLL building tool.
 LDDLL = $(CC)
-LDDLLFLAGS = -static 
+#LDDLLFLAGS = -static
+LDDLLFLAGS = -shared 
 LDDLLOUT = -o 
 
 # Static linker.
