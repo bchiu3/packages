@@ -19,3 +19,4 @@ cmake -G"Unix Makefiles" \
   ..
 
 make
+make install

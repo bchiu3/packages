@@ -107,6 +107,8 @@ clean:
 	if [ -f libuv-1.40.0/Makefile ]; then \
 		make -C libuv-1.40.0 distclean; \
 	fi
+	cd libwebsockets-2.4.2 && rm -rf build
+	cd libwebsockets-3.2.2 && rm -rf build
 
 install:
 	rsync -avz build/include/  $(DEST)/usr/include/
