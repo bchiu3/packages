@@ -15,4 +15,7 @@ cmake -G"Unix Makefiles" \
   -DLWS_MBEDTLS_INCLUDE_DIRS=$mypath/../build/include \
   -DCMAKE_C_COMPILER=$CC \
   -DCMAKE_C_FLAGS="-fno-stack-protector -fno-PIC -Wno-error" \
+  -DCMAKE_INSTALL_PREFIX=$mypath/../build \
   ..
+
+make

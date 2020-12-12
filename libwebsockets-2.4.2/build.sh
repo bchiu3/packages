@@ -16,4 +16,7 @@ cmake -G"Unix Makefiles" \
   -DCMAKE_C_COMPILER=$CC \
   -DCMAKE_C_FLAGS="-fno-stack-protector -fno-PIC -Wno-error" \
   -DLWS_WITHOUT_TESTAPPS=1 \
+  -DCMAKE_INSTALL_PREFIX=$mypath/../build \
   ..
+
+make
