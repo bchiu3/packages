@@ -14,9 +14,10 @@ cmake -G"Unix Makefiles" \
   -DLWS_WOLFSSL_LIBRARIES=$mypath/../build/lib/libwolfssl.a \
   -DLWS_WOLFSSL_INCLUDE_DIRS=$mypath/../build/include \
   -DCMAKE_C_COMPILER=$CC \
-  -DCMAKE_C_FLAGS="-fno-stack-protector -fno-PIC -Wno-error" \
+  -DCMAKE_C_FLAGS="-fno-stack-protector -fPIC -Wno-error" \
   -DLWS_WITHOUT_TESTAPPS=1 \
   -DCMAKE_INSTALL_PREFIX=$mypath/../build \
+  -DLWS_WITH_SHARED=0 \
   ..
 
 make
