@@ -79,6 +79,7 @@ clean:
 	make -C cs50 clean
 	make -C bearssl-0.6 clean
 	make -C curl-websocket clean
+	make -C mbedtls-2.24.0 clean
 	if [ -f curl-7.72.0/Makefile ]; then \
 		make -C curl-7.72.0 distclean; \
 	fi
