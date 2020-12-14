@@ -378,7 +378,7 @@ else
 	if exist *.exe del /Q /F *.exe
 	del /S /Q /F $(EXTRA_GENERATED)
 endif
-	$(MAKE) -C fuzz clean
+	#$(MAKE) -C fuzz clean
 
 list:
 	echo $(APPS)
