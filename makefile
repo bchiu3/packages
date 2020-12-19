@@ -1,5 +1,6 @@
 N=$(shell nproc)
 
+CC ?= gcc
 DEST ?=
 
 all: build_dir cs50 zlib ncurses readline conio
