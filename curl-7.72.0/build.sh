@@ -7,6 +7,7 @@ export LDFLAGS=-L$(pwd)/../build/lib -static
 export LIBS=-l${SSL}
 export CFLAGS=-static
 export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
+export LD_LIBRARY_PATH=$(pwd)/../build/lib
 ./configure --prefix=$(pwd)/../build \
 			--libdir=$(pwd)/../build/lib \
 			--includedir=$(pwd)/../build/include \
