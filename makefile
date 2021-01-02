@@ -3,7 +3,7 @@ N=$(shell nproc)
 CC ?= gcc
 DEST ?=
 
-all: build_dir cs50 zlib ncurses readline conio
+all: build_dir cs50 zlib ncurses readline conio bearssl curl
 .PHONY: build_dir 
 
 ssl: bearssl wolfssl libressl mbedtls termcap openssl
