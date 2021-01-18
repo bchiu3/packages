@@ -47,5 +47,5 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 			--with-${SSL}=$(pwd)/../build \
 			--disable-verbose
 
-make curl_LDFLAGS=-all-static -j $(nproc)
+make curl_LDFLAGS=-all-static -j $(nproc) V=1
 make install
