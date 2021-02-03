@@ -75,6 +75,9 @@ termcap:
 uv:
 	cd libuv-1.40.0 && ./build.sh
 
+kcgi:
+	cd kcgi-0.12.3 && ./build.sh
+
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -111,6 +114,7 @@ clean:
 	fi
 	cd libwebsockets-2.4.2 && rm -rf build
 	cd libwebsockets-3.2.2 && rm -rf build
+	bmake -C kcgi-0.12.3 distclean;
 
 install:
 	rsync -avz build/include/  $(DEST)/usr/include/
