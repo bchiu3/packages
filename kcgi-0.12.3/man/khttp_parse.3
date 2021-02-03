@@ -1,0 +1,917 @@
+.\"	$Id: khttp_parse.3,v 1.68 2020/07/21 10:44:50 kristaps Exp $
+.\"
+.\" Copyright (c) 2014--2017 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 21 2020 $
+.Dt KHTTP_PARSE 3
+.Os
+.Sh NAME
+.Nm khttp_parse ,
+.Nm khttp_parsex
+.Nd parse a CGI instance for kcgi
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft "enum kcgi_err"
+.Fo khttp_parse
+.Fa "struct kreq *req"
+.Fa "const struct kvalid *keys"
+.Fa "size_t keysz"
+.Fa "const char *const *pages"
+.Fa "size_t pagesz"
+.Fa "size_t defpage"
+.Fc
+.Ft "enum kcgi_err"
+.Fo khttp_parsex
+.Fa "struct kreq *req"
+.Fa "const struct kmimemap *suffixes"
+.Fa "const char *const *mimes"
+.Fa "size_t mimesz"
+.Fa "const struct kvalid *keys"
+.Fa "size_t keysz"
+.Fa "const char *const *pages"
+.Fa "size_t pagesz"
+.Fa "size_t defmime"
+.Fa "size_t defpage"
+.Fa "void *arg"
+.Fa "void (*argfree)(void *arg)"
+.Fa "unsigned int debugging"
+.Fa "const struct kopts *opts"
+.Fc
+.Vt extern const char *const kmimetypes[KMIME__MAX];
+.Vt extern const char *const khttps[KHTTP__MAX];
+.Vt extern const char *const kschemes[KSCHEME__MAX];
+.Vt extern const char *const kmethods[KMETHOD__MAX];
+.Vt extern const struct kmimemap ksuffixmap[];
+.Vt extern const char *const ksuffixes[KMIME__MAX];
+.Sh DESCRIPTION
+The
+.Fn khttp_parse
+and
+.Fn khttp_parsex
+functions parse and validate input and the HTTP environment
+(compression, paths, MIME types, and so on).
+They are the central functions in the
+.Xr kcgi 3
+library, parsing and validating key-value form (query string, message
+body, cookie) data and opaque message bodies.
+.Pp
+They must be matched by
+.Xr khttp_free 3
+if and only if the return value is
+.Dv KCGI_OK .
+Otherwise, resources are internally freed.
+.Pp
+The collective arguments are as follows:
+.Bl -tag -width Ds
+.It Fa arg
+A pointer to private application data.
+It is not touched unless
+.Fa argfree
+is provided.
+.It Fa argfree
+Function invoked with
+.Fa arg
+by the child process starting to parse untrusted network data.
+This makes sure that no unnecessary data is leaked into the child.
+.It Fa debugging
+This bit-field enables debugging of the underlying parse and/or write
+routines.
+It may have
+.Dv KREQ_DEBUG_WRITE
+for writes and
+.Dv KREQ_DEBUG_READ_BODY
+for the pre-parsed body.
+Debugging messages to
+.Xr kutil_info 3
+consist of the process ID followed by
+.Qq -tx
+or
+.Qq -rx
+for writing or reading, a colon and space, then the logged data.
+A newline will flush the existing line, as well reaching 80 characters.
+If flushed at 80 characters and not a newline, an ellipsis will follow
+the line.
+The total logged bytes will be emitted at the end of all reads or
+writes.
+.It Fa defmime
+If no MIME type is specified (that is, there's no suffix to the
+page request), use this index in the
+.Fa mimes
+array.
+.It Fa defpage
+If no page was specified (e.g., the default landing page), this is
+provided as the requested page index.
+.It Fa keys
+An optional array of input and validation fields or
+.Dv NULL .
+.It Fa keysz
+The number of elements in
+.Fa keys .
+.It Fa mimesz
+The number of elements in
+.Fa mimes .
+Also the MIME index used if no MIME type was matched.
+This differs from
+.Fa defmime ,
+which is used if there is no MIME suffix at all.
+.It Fa mimes
+An array of MIME types (e.g.,
+.Dq text/html ) ,
+mapped into a MIME index during MIME body parsing.
+This relates both to pages and input fields with a body type.
+Any array should include at least
+.Li text/plain ,
+as this is the default content type for MIME documents.
+.It Fa opts
+Tunable options regarding socket buffer sizes and so on.
+If set to
+.Dv NULL ,
+meaningful defaults are used.
+.It Fa pages
+An array of recognised pathnames.
+When pathnames are parsed, they're matched to indices in this array.
+.It Fa pagesz
+The number of pages in
+.Fa pages .
+Also used if the requested page was not in
+.Fa pages .
+.It Fa req
+This structure is cleared and filled with input fields and HTTP context
+parsed from the CGI environment.
+It is the main structure carried around in a
+.Xr kcgi 3
+application.
+.It Fa suffixes
+Define the MIME type (suffix) mapping.
+.El
+.Pp
+The first form,
+.Fn khttp_parse ,
+is for applications using the system-recognised MIME types.
+This should work well enough for most applications.
+It is equivalent to invoking the second form,
+.Fn khttp_parsex ,
+as follows:
+.Bd -literal -offset indent
+khttp_parsex(req, ksuffixmap,
+  kmimetypes, KMIME__MAX, keys, keysz,
+  pages, pagesz, KMIME_TEXT_HTML,
+  defpage, NULL, NULL, 0, NULL);
+.Ed
+.Ss Types
+A
+.Vt "struct kreq"
+object is filled in by
+.Fn khttp_parse
+and
+.Fn khttp_parsex .
+It consists of the following fields:
+.Bl -tag -width Ds
+.It Vt "void *" Ns Va arg
+Private application data.
+This is set during
+.Fn khttp_parse .
+.It Vt "enum kauth" Va auth
+Type of
+.Dq managed
+HTTP authorisation performed by the web server according to the
+.Ev AUTH_TYPE
+header variable, if any.
+This is
+.Dv KAUTH_DIGEST
+for the
+.Ev AUTH_TYPE
+.Qq digest ,
+.Dv KAUTH_BASIC
+for
+.Qq basic ,
+.Dv KAUTH_UNKNOWN
+for other values of
+.Ev AUTH_TYPE ,
+or
+.Dv KAUTH_NONE
+if
+.Ev AUTH_TYPE
+is not set.
+See the
+.Va rawauth
+field for raw authorisation requests.
+.It Vt "struct kpair **" Ns Va cookiemap
+An array of
+.Fa keysz
+singly linked lists of elements of the
+.Va cookies
+array.
+If
+.Va cookie Ns -> Ns Va key
+is equal to one of the entries of
+.Fa keys
+and
+.Va cookie Ns -> Ns Va state
+is
+.Dv KPAIR_VALID
+or
+.Dv KPAIR_UNCHECKED ,
+the cookie is added to the list
+.Va cookiemap Ns Bq Va cookie Ns -> Ns Va keypos .
+Empty lists are
+.Dv NULL .
+If a list contains more than one cookie,
+.Va cookie Ns -> Ns Va next
+points to the next cookie.
+For the last cookie in a list,
+.Va cookie Ns -> Ns Va next
+is NULL.
+.It Vt "struct kpair **" Ns Va cookienmap
+Similar to
+.Va cookiemap ,
+except that it contains the cookies where
+.Va cookie Ns -> Ns Va state
+is
+.Dv KPAIR_INVALID .
+.It Vt "struct kpair *" Ns Va cookies
+Key-value pairs read from request cookies found in the
+.Ev HTTP_COOKIE
+header variable, or
+.Dv NULL
+if
+.Va cookiesz
+is 0.
+See
+.Va fields
+for key-value pairs from the request query string or message body.
+.It Vt size_t Va cookiesz
+The size of the
+.Va cookies
+array.
+.It Vt "struct kpair **" Ns Va fieldmap
+Similar to
+.Va cookiemap ,
+except that the lists contain elements of the
+.Va fields
+array.
+.It Vt "struct kpair **" Ns Va fieldnmap
+Similar to
+.Va fieldmap ,
+except that it contains the fields where
+.Va field Ns -> Ns Va state
+is
+.Dv KPAIR_INVALID .
+.It Vt "struct kpair *" Ns Va fields
+Key-value pairs read from the
+.Ev QUERY_STRING
+header variable and from the message body, or
+.Dv NULL
+if
+.Dv fieldsz
+is 0.
+See
+.Va cookies
+for key-value pairs from request cookies.
+.It Vt size_t Va fieldsz
+The number of elements in the
+.Va fields
+array.
+.It Vt "char *" Ns Va fullpath
+The full requested path as contained in the
+.Ev PATH_INFO
+header variable.
+For example, requesting
+.Qq https://bsd.lv/app.cgi/dir/file.html?q=v ,
+where
+.Qq app.cgi
+is the CGI program, this value would be
+.Pa /dir/file.html .
+It is not guaranteed to start with a slash and it may be an empty
+string.
+.It Vt "char *" Ns Va host
+The host name received in the
+.Ev HTTP_HOST
+header variable.
+When using name-based virtual hosting, this is typically the virtual
+host name specified by the client in the HTTP request, and it should
+not be confused with the canonical DNS name of the host running the
+web server.
+For example, a request to
+.Qq https://bsd.lv/app.cgi/file
+would have a host of
+.Qq bsd.lv .
+If
+.Ev HTTP_HOST
+is not defined,
+.Va host
+is set to
+.Qq localhost .
+.It Vt "struct kdata *" Ns Va kdata
+Internal data.
+Should not be touched.
+.It Vt "const struct kvalid *" Ns Va keys
+Value passed to
+.Fn khttp_parse .
+.It Vt size_t Va keysz
+Value passed to
+.Fn khttp_parse .
+.It Vt "enum kmethod" Va method
+The
+.Dv KMETHOD_ACL ,
+.Dv KMETHOD_CONNECT ,
+.Dv KMETHOD_COPY ,
+.Dv KMETHOD_DELETE ,
+.Dv KMETHOD_GET ,
+.Dv KMETHOD_HEAD ,
+.Dv KMETHOD_LOCK ,
+.Dv KMETHOD_MKCALENDAR ,
+.Dv KMETHOD_MKCOL ,
+.Dv KMETHOD_MOVE ,
+.Dv KMETHOD_OPTIONS ,
+.Dv KMETHOD_POST ,
+.Dv KMETHOD_PROPFIND ,
+.Dv KMETHOD_PROPPATCH ,
+.Dv KMETHOD_PUT ,
+.Dv KMETHOD_REPORT ,
+.Dv KMETHOD_TRACE ,
+or
+.Dv KMETHOD_UNLOCK
+submission method obtained from the
+.Ev REQUEST_METHOD
+header variable.
+If an unknown method was requested,
+.Dv KMETHOD__MAX
+is used.
+If no method was specified, the default is
+.Dv KMETHOD_GET .
+.Pp
+Applications will usually accept only
+.Dv KMETHOD_GET
+and
+.Dv KMETHOD_POST ,
+so be sure to emit a
+.Dv KHTTP_405
+status for undesired methods.
+.It Vt size_t Va mime
+The MIME type of the requested file as determined by its
+.Pa suffix
+matched to the
+.Fa mimemap
+map passed to
+.Fn khttp_parsex
+or the default
+.Va kmimemap
+if using
+.Fn khttp_parse .
+This defaults to the
+.Va mimesz
+value passed to
+.Fn khttp_parsex
+or the default
+.Dv KMIME__MAX
+if using
+.Fn khttp_parse
+when no suffix is specified or when the suffix is specified but not known.
+.It Vt size_t Va page
+The page index found by looking up
+.Va pagename
+in the
+.Fa pages
+array.
+If
+.Va pagename
+is not found in
+.Fa pages ,
+.Fa pagesz
+is used; if
+.Va pagename
+is empty,
+.Fa defpage
+is used.
+.It Vt "char *" Ns Va pagename
+The first component of
+.Va fullpath
+or an empty string if there is none.
+It is compared to the elements of the
+.Fa pages
+array to determine which
+.Va page
+it corresponds to.
+For example, for a
+.Va fullpath
+of
+.Qq /dir/file.html
+this component corresponds to
+.Pa dir .
+For
+.Qq /file.html ,
+it's
+.Pa file .
+.It Vt "char *" Ns Va path
+The middle part of
+.Va fullpath ,
+after stripping
+.Va pagename Ns /
+at the beginning and
+.Pf \&. Va suffix
+at the end, or an empty string if there is none.
+For example, if the
+.Va fullpath
+is
+.Pa bar/baz.html ,
+this component is
+.Pa baz .
+.It Vt "char *" Ns Va pname
+The script name received in the
+.Ev SCRIPT_NAME
+header variable.
+For example, for a request to a CGI program
+.Pa /var/www/cgi-bin/app.cgi
+mapped by the web server from
+.Qq https://bsd.lv/app.cgi/file ,
+this would be
+.Pa app.cgi .
+This may not reflect a file system entity and it may be an empty string.
+.It Vt uint16_t Va port
+The server's receiving TCP port according to the
+.Ev SERVER_PORT
+header variable, or 80 if that is not defined or an invalid number.
+.It Vt "struct khttpauth" Va rawauth
+The raw authorization request according to the
+.Ev HTTP_AUTHORIZATION
+header variable passed by the web server.
+Some web servers, for example Apache, do not set
+.Ev HTTP_AUTHORIZATION
+by default.
+.It Vt "char *" Ns Va remote
+The string form of the client's IPv4 or IPv6 address taken from the
+.Ev REMOTE_ADDR
+header variable, or
+.Qq 127.0.0.1
+if that is not defined.
+The address format of the string is not checked.
+.It Vt "struct khead *" Ns Va reqmap Ns Bq Dv KREQU__MAX
+Mapping of
+.Vt "enum krequ"
+enumeration values to
+.Va reqs
+parsed from the input stream.
+.It Vt "struct khead *" Ns Va reqs
+List of all HTTP request headers, known via
+.Vt "enum krequ"
+and not known, parsed from the input stream, or
+.Dv NULL
+if
+.Va reqsz
+is 0.
+.It Vt size_t Va reqsz
+Number of request headers in
+.Va reqs .
+.It Vt "enum kscheme" Va scheme
+The access scheme according to the
+.Ev HTTPS
+header variable, either
+.Dv KSCHEME_HTTPS
+if
+.Ev HTTPS
+is set and equal to the string
+.Qq on
+or
+.Dv KSCHEME_HTTP
+otherwise.
+.It Vt "char *" Ns Va suffix
+The suffix part of the last component of
+.Va fullpath
+or an empty string if there is none.
+For example, if the
+.Va fullpath
+is
+.Pa /bar/baz.html ,
+this component is
+.Pa html .
+See the
+.Va mime
+field for the MIME type parsed from the suffix.
+.El
+.Pp
+The application may optionally define
+.Vt keys
+provided to
+.Fn khttp_parse
+and
+.Fn khttp_parsex
+as an array of
+.Vt "struct kvalid" .
+This structure is central to the validation of input data.
+It consists of the following fields:
+.Bl -tag -width Ds
+.It Vt "const char *" Ns Va name
+The field name, i.e., how it appears in the HTML form input name.
+This cannot be
+.Dv NULL .
+If the field name is an empty string and the HTTP message consists of an
+opaque body (and not key-value pairs), then that field will be used to
+validate the HTTP message body.
+This is useful for
+.Dv KMETHOD_PUT
+style requests.
+.It Vt "int (*)(struct kpair *)" Va valid
+A validation function returning non-zero if parsing and validation
+succeed or 0 otherwise.
+If it is
+.Dv NULL ,
+then no validation is performed, the data is considered as valid,
+and it is bucketed into
+.Va cookiemap
+or
+.Va fieldmap
+as such.
+.Pp
+User-defined
+.Fa valid
+functions usually set the
+.Va type
+and
+.Va parsed
+fields in the key-value pair.
+When working with binary data or with a key that can take different
+data types, it is acceptable for a validation function to set the
+.Va type
+to
+.Dv KPAIR__MAX
+and for the application to ignore the
+.Va parsed
+field and to work directly with
+.Va val
+and
+.Va valsz .
+.Pp
+The validation function is allowed to allocate new memory for
+.Va val :
+if the
+.Va val
+pointer changes during validation, the memory pointed to after validation
+will be freed with
+.Xr free 3
+after the data is passed out of the sandbox.
+.Pp
+These functions are invoked from within a system-specific sandbox
+that may not allow some system calls, for example opening files or
+sockets.
+In other words, validation functions should only do pure computation.
+.El
+.Pp
+The
+.Vt "struct kpair"
+structure presents the user with fields parsed from input and (possibly)
+matched to the
+.Fa keys
+variable passed to
+.Fn khttp_parse
+and
+.Fn khttp_parsex .
+It is also passed to the validation function to be filled in.
+In this case, the MIME-related fields are already filled in and may be
+examined to determine the method of validation.
+This is useful when validating opaque message bodies.
+.Bl -tag -width Ds
+.It Vt "char *" Ns Va ctype
+The value's MIME content type (e.g.,
+.Li image/jpeg ) ,
+or
+an empty string if not defined.
+.It Vt "size_t" Va ctypepos
+If
+.Va ctype
+is not
+.Dv NULL ,
+it is looked up in the
+.Fa mimes
+parameter passed to
+.Fn khttp_parsex
+or
+.Va ksuffixmap
+if using
+.Fn khttp_parse .
+If found, it is set to the appropriate index.
+Otherwise, it's
+.Fa mimesz .
+.It Vt "char *" Ns Va file
+The value's MIME source filename or
+an empty string
+if not defined.
+.It Vt "char *" Ns Va key
+The NUL-terminated key (input) name.
+If the HTTP message body is opaque (e.g.,
+.Dv KMETHOD_PUT ) ,
+then an empty-string key is cooked up.
+The key may contain an arbitrary sequence of non-NUL bytes, even
+non-ASCII bytes, control characters, and shell metacharacters.
+.It Vt "size_t" Va keypos
+If found in the
+.Fa keys
+array passed to
+.Fn khttp_parse ,
+the index of the matching key.
+Otherwise
+.Fa keysz .
+.It Vt "struct kpair *" Ns Va next
+In a cookie or field map,
+.Fa next
+points to the next parsed key-value pair with the same
+.Fa key
+name.
+This occurs most often in HTML checkbox forms, where many fields may
+have the same name.
+.It Vt "union parsed" Va parsed
+The parsed, validated value.
+These may be integer in
+.Va i ,
+for a 64-bit signed integer; a string
+.Va s ,
+for a NUL-termianted character string; or a double
+.Va d ,
+for a double-precision floating-point number.
+This is intentionally basic because the resulting data must be reliably
+passed from the parsing context back into the web application.
+.It Vt "enum kpairstate" Va state
+The validation state:
+.Dv KPAIR_VALID
+if the pair was successfully validated by a validation function,
+.Dv KPAIR_INVALID
+if a validation function was invoked but failed, or
+.Dv KPAIR_UNCHECKED
+if no validation function is defined for this
+.Va key .
+.It Vt "enum kpairtype" Va type
+If parsed, the type of data in
+.Fa parsed ,
+otherwise
+.Dv KFIELD__MAX .
+.It Vt "char *" Ns Va val
+The (input) value, which may contain an arbitrary sequence of bytes,
+even NUL bytes, non-ASCII bytes, control characters, and shell
+metacharacters.
+The byte following the end of the array,
+.Va val Ns Va [ valsz ] ,
+is always guaranteed to be NUL.
+The validation function may modify the contents.
+For example, for integer numbers and e-mail adresses, trailing
+whitespace may be replaced with NUL bytes.
+.It Vt "size_t" Va valsz
+The length of the
+.Va val
+buffer in bytes.
+It is not a string length.
+.It Vt "char *" Ns Va xcode
+The value's MIME content transfer encoding (e.g.,
+.Li base64 ) ,
+or an empty string if not defined.
+.El
+.Pp
+The
+.Vt struct khttpauth
+structure holds authorisation data if passed by the server.
+The specific fields are as follows.
+.Bl -tag -width Ds
+.It Vt "enum kauth" Va type
+If no data was passed by the server, the
+.Va type
+value is
+.Dv KAUTH_NONE .
+Otherwise it's
+.Dv KAUTH_BASIC
+or
+.Dv KAUTH_DIGEST ,
+with
+.Dv KAUTH_UNKNOWN
+if the authorisation type was not recognised.
+.It Vt "int" Va authorised
+For
+.Dv KAUTH_BASIC
+or
+.Dv KAUTH_DIGEST
+authorisation, this field indicates whether all required values were
+specified.
+.It Vt "char *" Ns Va digest
+An MD5 digest of
+.Ev REQUEST_METHOD ,
+.Ev SCRIPT_NAME ,
+.Ev PATH_INFO ,
+header variables and the request body.
+It is not a NUL-terminated string, but an array of exactly
+.Dv MD5_DIGEST_LENGTH
+bytes.
+Only filled in when
+.Ev HTTP_AUTHORIZATION
+is
+.Qq digest
+and
+.Va authorised
+is non-zero.
+Otherwise, it remains
+.Dv NULL .
+Used in
+.Xr khttpdigest_validatehash 3 .
+.It Va d
+An anonymous union containing parsed fields per type:
+.Vt "struct khttpbasic" Va basic
+for
+.Dv KAUTH_BASIC
+or
+.Vt "struct khttpdigest" Va digest
+for
+.Dv KAUTH_DIGEST .
+.El
+.Pp
+If the field for an HTTP authorisation request is
+.Dv KAUTH_BASIC ,
+it will consist of the following for its parsed entities in its
+.Vt struct khttpbasic
+structure:
+.Bl -tag -width Ds
+.It Va response
+The hashed and encoded response string.
+.El
+.Pp
+If the field for an HTTP authorisation request is
+.Dv KAUTH_DIGEST ,
+it will consist of the following in its
+.Vt struct khttpdigest
+structure:
+.Bl -tag -width Ds
+.It Va alg
+The encoding algorithm, parsed from the possible
+.Li MD5
+or
+.Li MD5-Sess
+values.
+.It Va qop
+The quality of protection algorithm, which may be unspecified,
+.Li Auth
+or
+.Li Auth-Init .
+.It Va user
+The user coordinating the request.
+.It Va uri
+The URI for which the request is designated.
+.Pq This must match the request URI .
+.It Va realm
+The request realm.
+.It Va nonce
+The server-generated nonce value.
+.It Va cnonce
+The (optional) client-generated nonce value.
+.It Va response
+The hashed and encoded response string, which entangled fields depending
+on algorithm and quality of protection.
+.It Va count
+The (optional)
+.Va cnonce
+counter.
+.It Va opaque
+The (optional) opaque string requested by the server.
+.El
+.Pp
+The
+.Vt struct kopts
+structure consists of tunables for network performance.
+You probably don't want to use these unless you really know what you're
+doing!
+.Bl -tag -width Ds
+.It Va sndbufsz
+The size of the output buffer.
+The output buffer is a heap-allocated region into which writes (via
+.Xr khttp_write 3
+and
+.Xr khttp_head 3 )
+are buffered instead of being flushed directly to the wire.
+The buffer is flushed when it is full, when
+the HTTP headers are flushed, and when
+.Xr khttp_free 3
+is invoked.
+If the buffer size is zero, writes are flushed immediately to the wire.
+If the buffer size is less than zero, it is filled with a meaningful
+default.
+.El
+.Pp
+Lastly, the
+.Vt struct khead
+structure holds parsed HTTP headers.
+.Bl -tag -width Ds
+.It Va key
+Holds the HTTP header name.
+This is not the CGI header name (e.g.,
+.Li HTTP_COOKIE ) ,
+but the reconstituted HTTP name (e.g.,
+.Li Coookie ) .
+.It Va val
+The opaque header value, which may be an empty string.
+.El
+.Ss Variables
+A number of variables are defined
+.In kcgi.h
+to simplify invocations of the
+.Fn khttp_parse
+family.
+Applications are strongly suggested to use these variables (and
+associated enumerations) in
+.Fn khttp_parse
+instead of overriding them with hand-rolled sets in
+.Fn khttp_parsex .
+.Bl -tag -width Ds
+.It Va kmimetypes
+Indexed list of common MIME types, for example,
+.Dq text/html
+and
+.Dq application/json .
+Corresponds to
+.Vt enum kmime
+.Vt enum khttp .
+.It Va khttps
+Indexed list of HTTP status code and identifier, for example,
+.Dq 200 OK .
+Corresponds to
+.Vt enum khttp .
+.It Va kschemes
+Indexed list of URL schemes, for example,
+.Dq https
+or
+.Dq ftp .
+Corresponds to
+.Vt enum kscheme .
+.It Va kmethods
+Indexed list of HTTP methods, for example,
+.Dq GET
+and
+.Dq POST .
+Corresponds to
+.Vt enum kmethod .
+.It Va ksuffixmap
+Map of MIME types defined in
+.Vt enum kmime
+to possible suffixes.
+This array is terminated with a MIME type of
+.Dv KMIME__MAX
+and name
+.Dv NULL .
+.It Va ksuffixes
+Indexed list of canonical suffixes for MIME types corresponding to
+.Vt enum kmime .
+This may be a
+.Dv NULL
+pointer for types that have no canonical suffix, for example.
+.Dq application/octet-stream .
+.El
+.Sh RETURN VALUES
+.Fn khttp_parse
+and
+.Fn khttp_parsex
+return an error code:
+.Bl -tag -width -Ds
+.It Dv KCGI_OK
+Success (not an error).
+.It Dv KCGI_ENOMEM
+Memory failure.
+This can occur in many places: spawning a child, allocating memory,
+creating sockets, etc.
+.It Dv KCGI_ENFILE
+Could not allocate file descriptors.
+.It Dv KCGI_EAGAIN
+Could not spawn a child.
+.It Dv KCGI_FORM
+Malformed data between parent and child whilst parsing an HTTP request.
+(Internal system error.)
+.It Dv KCGI_SYSTEM
+Opaque operating system error.
+.El
+.Pp
+On failure, the calling application should terminate as soon as possible.
+Applications should
+.Em not
+try to write an HTTP 505 error or similar, but allow the web server to
+handle the empty CGI response on its own.
+.Sh SEE ALSO
+.Xr kcgi 3 ,
+.Xr khttp_free 3
+.Sh AUTHORS
+The
+.Fn khttp_parse
+and
+.Fn khttp_parsex
+functions were written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

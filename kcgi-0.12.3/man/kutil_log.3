@@ -1,0 +1,245 @@
+.\"	$Id: kutil_log.3,v 1.16 2020/07/21 12:57:33 kristaps Exp $
+.\"
+.\" Copyright (c) 2016--2018 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 21 2020 $
+.Dt KUTIL_LOG 3
+.Os
+.Sh NAME
+.Nm kutil_err ,
+.Nm kutil_errx ,
+.Nm kutil_info ,
+.Nm kutil_log ,
+.Nm kutil_logx ,
+.Nm kutil_verr ,
+.Nm kutil_verrx ,
+.Nm kutil_vinfo ,
+.Nm kutil_vlog ,
+.Nm kutil_vlogx ,
+.Nm kutil_vwarn ,
+.Nm kutil_vwarnx ,
+.Nm kutil_warn ,
+.Nm kutil_warnx
+.Nd format log messages
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft "void"
+.Fo kutil_err
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Ft "void"
+.Fo kutil_errx
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Ft "void"
+.Fo kutil_info
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Ft "void"
+.Fo kutil_log
+.Fa "const struct kreq *r"
+.Fa "const char *level"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Ft "void"
+.Fo kutil_logx
+.Fa "const struct kreq *r"
+.Fa "const char *level"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Ft "void"
+.Fo kutil_verr
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "va_list ap"
+.Fc
+.Ft "void"
+.Fo kutil_verrx
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "va_list ap"
+.Fc
+.Ft "void"
+.Fo kutil_vinfo
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "va_list ap"
+.Fc
+.Ft "void"
+.Fo kutil_vlog
+.Fa "const struct kreq *r"
+.Fa "const char *level"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "va_list ap"
+.Fc
+.Ft "void"
+.Fo kutil_vlogx
+.Fa "const struct kreq *r"
+.Fa "const char *level"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "va_list ap"
+.Fc
+.Ft "void"
+.Fo kutil_vwarn
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "va_list ap"
+.Fc
+.Ft "void"
+.Fo kutil_vwarnx
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "va_list ap"
+.Fc
+.Ft "void"
+.Fo kutil_warn
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Ft "void"
+.Fo kutil_warnx
+.Fa "const struct kreq *r"
+.Fa "const char *ident"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Sh DESCRIPTION
+These functions consistently format and output messages on standard
+error.
+See
+.Xr kutil_openlog 3
+for configuring an alternative log destination.
+.Pp
+These functions accept the following variables:
+.Bl -tag -width Ds
+.It Ft "const struct kreq *" Ns Fa r
+Active request handle opened with
+.Xr khttp_parse 3 .
+If
+.Dv NULL ,
+the remote host field will be omitted.
+.It Ft "const char *" Ns Fa level
+A human-readable log level.
+If
+.Dv NULL ,
+no level is printed.
+For functions not accepting this argument, the
+.Li INFO ,
+.Li WARN ,
+and
+.Li ERROR
+values are used for the informational, warning, and error functions,
+respectively.
+.It Ft "const char *" Ns Fa ident
+The client identity of the caller.
+This adheres to the common CGI practise of connecting a message to a
+logged-in user.
+If
+.Dv NULL ,
+no ident is printed.
+.It Ft "const char *" Ns Fa fmt
+The
+.Xr printf 3
+style format string for the variable argument or argument list
+following.
+This formats the log message.
+If
+.Dv NULL ,
+no message is printed.
+.El
+.Pp
+The
+.Fn kutil_err ,
+.Fn kutil_errx ,
+.Fn kutil_verr ,
+and
+.Fn kutil_verrx
+functions exit with
+.Dv EXIT_FAILURE .
+They never return.
+.Ss Output format
+The log messages are filtered on output: non-printable
+.Pq see Xr isprint 3
+characters are replaced with
+.Dq \&?
+and space characters
+.Pq \ea, \eb, \ef, \en, \er, \et, \ev, \e0
+are shown as literal escape characters.
+.Pp
+The
+.Fn kutil_err ,
+.Fn kutil_verr ,
+.Fn kutil_log ,
+.Fn kutil_vlog ,
+.Fn kutil_vwarn ,
+and
+.Fn kutil_warn
+functions print out the current
+.Vt errno
+following the log message.
+.Pp
+The output format is as follows, with a trailing newline:
+.Pp
+.Dl addr ident [date] level msg
+.Dl addr ident [date] level msg: errmsg
+.Pp
+Here,
+.Qq addr
+is the remote host as passed to the CGI script or
+.Qq -
+if
+.Fa r
+is
+.Dv NULL ; 
+and where
+.Qq ident
+.Qq level
+and
+.Qq msg ,
+if
+.Dv NULL ,
+will be rendered as
+.Qq - .
+The date is formatted as an HTTP date (RFC 822) in GMT.
+.Sh AUTHORS
+These functions were written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

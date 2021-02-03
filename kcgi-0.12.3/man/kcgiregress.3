@@ -1,0 +1,177 @@
+.\"	$Id: kcgiregress.3,v 1.8 2020/08/14 10:49:48 kristaps Exp $
+.\"
+.\" Copyright (c) 2015, 2020 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 14 2020 $
+.Dt KCGIREGRESS 3
+.Os
+.Sh NAME
+.Nm kcgiregress ,
+.Nm kcgi_regress_cgi ,
+.Nm kcgi_regress_fcgi
+.Nd regression framework for kcgi
+.Sh LIBRARY
+.Lb libkcgiregress
+.Sh SYNOPSIS
+.In kcgiregress.h
+.Ft int
+.Fo kcgi_regress_cgi
+.Fa "int (*client)(void *)"
+.Fa "void *clientData"
+.Fa "int (*server)(void *)"
+.Fa "void *serverData"
+.Fc
+.Ft int
+.Fo kcgi_regress_fcgi
+.Fa "int (*client)(void *)"
+.Fa "void *clientData"
+.Fa "int (*server)(void *)"
+.Fa "void *serverData"
+.Fc
+.Sh DESCRIPTION
+Automated testing platform for
+.Xr kcgi 3 .
+Allow for emulated CGI or FastCGI environments over a local network
+port.
+.Pp
+The
+.Fa server
+callback is invoked with argument
+.Fa serverArg
+within a CGI or FastCGI environment as if it were spawned by a web
+server, upon which the usual
+.Xr khttp_parse 3
+or
+.Xr khttp_fcgi_init 3
+and
+.Xr khttp_fcgi_parse 3
+functions are usually used to test behaviour.
+The
+.Fa client
+callback communicates with the server over port 17123.
+Usually this is orchestrated with
+.Xr libcurl 3 .
+The port number is fixed.
+.Pp
+Both of these callbacks must return zero on failure, non-zero on
+success.
+.Pp
+To compile and link, use
+.Xr pkg-config 1
+as follows:
+.Bd -literal -offset indent
+% cc `pkg-config --cflags kcgi-regress` -c -o sample.o sample.c
+% cc -o sample sample.o `pkg-config --libs kcgi-regress`
+.Ed
+.Pp
+.Xr kcgi 3
+components should use their respective
+.Xr pkg-config 1
+identifiers, such as
+.Qq kcgi-json
+for
+.Xr kcgijson 3
+output.
+Applications using
+.Xr libcurl 3
+should further use
+.Xr curl-config 1
+as well, or on some systems,
+.Xr pkg-config 1
+with
+.Qq libcurl .
+.Sh RETURN VALUES
+These functions return zero on failure, non-zero on success.
+.Sh EXAMPLES
+The following regression test simply checks that the server responds.
+Its only check is for operation and HTTP status code (201).
+.Bd -literal -offset indent
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <curl/curl.h>
+#include <kcgi.h>
+#include <kcgijson.h>
+#include <kcgiregress.h>
+
+static int
+server(void *arg)
+{
+  struct kreq      r;
+
+  if (khttp_parse(&r, NULL, 0, NULL, 0, 0) != KCGI_OK)
+    return 0;
+  khttp_head(&r, kresps[KRESP_STATUS],
+    "%s", khttps[KHTTP_201]);
+  khttp_head(&r, kresps[KRESP_CONTENT_TYPE],
+    "%s", kmimetypes[KMIME_APP_JSON]);
+  khttp_body(&r);
+  khttp_free(&r);
+
+  return 1;
+}
+
+static int
+client(void *arg)
+{
+  CURL    *curl;
+  long     http;
+
+  if ((curl = curl_easy_init()) == NULL)
+    return 0;
+  curl_easy_setopt(curl, CURLOPT_URL,
+    "http://localhost:17123/index.json");
+  if (curl_easy_perform(curl) != CURLE_OK)
+    return 0;
+  curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http);
+  curl_easy_cleanup(curl);
+  curl_global_cleanup();
+
+  return http == 201;
+}
+
+int
+main(void)
+{
+  return kcgi_regress_cgi
+    (client, NULL, server, NULL) ? 0 : 1;
+}
+.Ed
+.Pp
+To compile this simple regression test, the
+.Xr kcgi 3 ,
+.Xr kcgiregress 3 ,
+.Xr kcgijson 3 ,
+and
+.Xr libcurl 3
+libraries and headers are needed, along with further dependencies.
+Let the file be named
+.Pa sample.c .
+.Bd -literal -offset indent
+% export PKGS="kcgi-regress kcgi-json libcurl"
+% cc `pkg-config --cflags $PKGS` -c sample.c
+% cc -o sample sample.o `pkg-config --libs $PKGS`
+.Ed
+.Pp
+This assumes that
+.Xr libcurl 3
+has its configuration recognised by
+.Xr pkg-config 1 ,
+which isn't always the case: sometimes
+.Xr curl-config 1
+is required.
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

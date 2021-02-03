@@ -1,0 +1,247 @@
+.\"	$Id: khttp_templatex.3,v 1.1 2020/10/17 12:02:59 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2017--2018, 2020 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 17 2020 $
+.Dt KHTTP_TEMPLATEX 3
+.Os
+.Sh NAME
+.Nm khttp_templatex ,
+.Nm khttp_templatex_buf ,
+.Nm khttp_templatex_fd
+.Nd emit filled-in templates for kcgi
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft enum kcgi_err
+.Fo khttp_templatex
+.Fa "const struct ktemplate *t"
+.Fa "const char *filename"
+.Fa "const struct ktemplatex *x"
+.Fa "void *arg"
+.Fc
+.Ft enum kcgi_err
+.Fo khttp_templatex_buf
+.Fa "const struct ktemplate *t"
+.Fa "const char *buf"
+.Fa "size_t sz"
+.Fa "const struct ktemplatex *x"
+.Fa "void *arg"
+.Fc
+.Ft enum kcgi_err
+.Fo khttp_templatex_fd
+.Fa "const struct ktemplate *t"
+.Fa "int fd"
+.Fa "const char *filename"
+.Fa "const struct ktemplatex *x"
+.Fa "void *arg"
+.Fc
+.Sh DESCRIPTION
+Modify input by replacing keys in a template.
+This generalises the
+.Xr khttp_template 3
+family of functions with generic writing functions.
+All functions accept a template
+.Fa t
+consisting of the following fields:
+.Bl -tag -width Ds
+.It Fa "const char *const *key"
+An array of keys to be replaced in the template.
+.It Fa "size_t keysz"
+The number of keys in
+.Fa t->key .
+.It Fa "void *arg"
+An optional argument passed to
+.Fa t->cb .
+.It Fa "int (*cb)(size_t index, void *arg)"
+The callback function invoked when a key at position
+.Fa index ,
+which is always less than
+.Fa t->keysz ,
+is found in
+.Fa t->key .
+The optional
+.Fa arg
+is passed the function.
+The function must return zero on failure, non-zero on success.
+.El
+.Pp
+They further accept an extension
+.Fa x
+consisting of the following:
+.Bl -tag -width Ds
+.It Fa writer
+A writing function for writing input that does not match key sequences.
+If it is invoked and the return value is not
+.Dv KCGI_OK ,
+templating stops and the return value is returned to the caller.
+.It Fa fbk
+A fall-back function invoked if a key sequences was not found in the
+.Fa c->key
+array.
+This accepts the key sequence, length of the sequence, and
+.Fa arg .
+If
+.Dv NULL ,
+key sequences not found are passed to
+.Fa writer .
+.El
+.Pp
+If
+.Fa t
+is
+.Dv NULL ,
+the input is passed through to
+.Fa x->writer
+without any processing.
+.Pp
+Otherwise, the input is passed to
+.Fa x->writer
+until a key sequence in encountered matching a key in
+.Fa t->key .
+The callback
+.Fa t->cb
+is then invoked instead of printing the key sequence.
+If there are multiple matching keys in
+.Fa t->key ,
+only one is used (which is not yet fixed).
+If the key sequence is not found in
+.Fa t->key ,
+it is passed to
+.Fa x->fbk ,
+if not
+.Dv NULL ,
+or passed directly to
+.Fa x->writer
+otherwise.
+.Pp
+The different input types are
+.Fn khttpx_template ,
+which reads input from the file
+.Fa filename ;
+.Fn khttpx_template_buf ,
+which reads from a binary buffer
+.Fa buf
+of length
+.Fa sz ;
+and
+.Fn khttpx_template_fd ,
+which reads from a file descriptor
+.Fa fd
+with optional file-name
+.Fa fname
+used only for logging purposes.
+.Sh SYNTAX
+Each substring of the input beginning and ending with a pair
+of
+.Dq at
+signs,
+.Cm @@ Ns Ar key Ns Cm @@ ,
+is called a
+.Qq key sequence .
+Zero-length keys
+.Cm @@@@
+are allowed and match empty template keys.
+If the
+.Cm @@
+pair is escaped with a single backslash,
+.Cm \e@@ ,
+the backslash is removed and it's emitted as
+.Cm @@ .
+.Pp
+A key sequence may not contain an escaped pair: this is parsed as a
+backslash followed by the trailing pair.
+.Sh RETURN VALUES
+These return an
+.Ft enum kcgi_err
+indicating the error state:
+.Bl -tag -width KCGI_SYSTEM
+.It Dv KCGI_OK
+No error occurred.
+.It Dv KCGI_ENOMEM
+Memory allocation failed.
+.It Dv KCGI_SYSTEM
+A system call failed.
+For example, writing to the output stream failed, or
+.Fn khttp_template
+failed to
+.Xr open 2
+.Fa filename .
+.It Dv KCGI_FORM
+.Fa t->cb
+returned 0.
+.El
+.Pp
+If the
+.Fa x->writer
+function returns anything but
+.Dv KCGI_OK ,
+the return code is passed as the return value.
+.Sh EXAMPLES
+The following simple example takes a buffer
+.Fa buf
+and applies the replacement template of two values, writing it to the
+current context
+.Fa req .
+It stores the result in the given buffer
+.Fa out .
+.Bd -literal -offset indent
+static int writer(size_t idx, void *arg)
+{
+  struct kcgi_buf *p = arg;
+  if (idx == 0)
+    kcgi_buf_puts(p, "foo-value");
+  else if (idx == 1)
+    kcgi_buf_puts(p, "bar-value");
+  return 1;
+}
+
+enum kcgi_err format(struct kcgi_buf *out)
+{
+  const char *const keys[] = { "foo", "bar" };
+  struct ktemplate t = {
+    .key = keys,
+    .keysz = 2,
+    .arg = out,
+    .cb = writer
+  };
+  struct ktemplatex x = {
+    .writer = kcgi_buf_write,
+    .fbk = NULL
+  };
+  const char *in = "foo=@@foo@@, bar=@@bar@@";
+
+  memset(&out, 0, sizeof(struct kcgi_buf));
+  return khttp_templatex_buf
+    (&t, in, strlen(in), &x, out);
+}
+.Ed
+.Pp
+The function will produce
+.Qq foo=foo-value, bar=bar-value .
+.Sh SEE ALSO
+.Xr kcgi 3 ,
+.Xr khttp_body 3 ,
+.Xr khttp_parse 3 ,
+.Xr khttp_template 3 ,
+.Xr khttp_write 3
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

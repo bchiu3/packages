@@ -1,0 +1,76 @@
+.\"	$Id: kmalloc.3,v 1.10 2020/02/11 09:56:54 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2017 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 11 2020 $
+.Dt KMALLOC 3
+.Os
+.Sh NAME
+.Nm kasprintf ,
+.Nm kcalloc ,
+.Nm kmalloc ,
+.Nm krealloc ,
+.Nm kreallocarray ,
+.Nm kstrdup ,
+.Nm kvasprintf
+.Nd memory allocation functions for kcgi
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft int
+.Fn kasprintf "char **p" "const char *fmt" "..."
+.Ft "void *"
+.Fn kcalloc "size_t nm" "size_t sz"
+.Ft "void *"
+.Fn kmalloc "size_t sz"
+.Ft "void *"
+.Fn krealloc "void *p" "size_t sz"
+.Ft "void *"
+.Fn kreallocarray "void *p" "size_t nm" "size_t sz"
+.Ft "char *"
+.Fn kstrdup "const char *cp"
+.Ft int
+.Fn kvasprintf "char **p" "const char *fmt" "va_list ap"
+.Sh DESCRIPTION
+These functions wrap around corresponding libc versions except that on
+allocation failure, they print a warning message to standard error
+output and call
+.Xr exit 3 .
+.Pp
+Calling
+.Fn kcalloc ,
+.Fn kmalloc ,
+.Fn krealloc ,
+or
+.Fn kreallocarray
+with
+.Fa sz
+or
+.Fa nm
+equal to zero, or passing
+.Dv NULL
+to
+.Fn kstrdup ,
+additionally prints a warning message to the standard
+error output and produces non-portable results.
+.Sh SEE ALSO
+.Xr kcgi 3
+.Sh AUTHORS
+These functions were written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

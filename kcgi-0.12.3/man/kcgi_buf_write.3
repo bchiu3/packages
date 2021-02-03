@@ -1,0 +1,102 @@
+.\"	$Id: kcgi_buf_write.3,v 1.5 2020/03/22 12:54:42 kristaps Exp $
+.\"
+.\" Copyright (c) 2018, 2020 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 22 2020 $
+.Dt KCGI_BUF_WRITE 3
+.Os
+.Sh NAME
+.Nm kcgi_buf_write
+.Nd put binary data into a kcgi buffer
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft enum kcgi_err
+.Fo kcgi_buf_write
+.Fa "const char *buf"
+.Fa "size_t sz"
+.Fa "void *arg"
+.Fc
+.Sh DESCRIPTION
+Appends binary data
+.Fa buf
+of size
+.Fa sz
+to
+.Fa arg ,
+which is cast to a 
+.Vt "struct kcgi_buf *" .
+Buffers must be initialised to zero with
+.Xr memset 3
+prior to first use.
+The buffer will always be NUL-terminated.
+Does nothing if
+.Fa buf
+is
+.Dv NULL
+or
+.Fa sz
+is zero.
+.Pp
+The
+.Vt "struct kcgi_buf"
+structure has the following fields:
+.Bl -tag -width Ds
+.It Va "char *buf"
+Buffer contents.
+This is always NUL-terminated, even if the data is binary.
+This buffer must be passed to
+.Xr free 3
+after use.
+.It Va "size_t maxsz"
+Allocated buffer size.
+.It Va "size_t sz"
+Buffer current length not including the NUL terminator.
+.It Va "size_t growsz"
+Amount of
+.Qq slop
+space in the buffer if it's reallocated.
+If set to zero, defaults to 1 KB.
+.El
+.Sh RETURN VALUES
+These functions return an
+.Ft enum kcgi_err
+indicating the error state:
+.Dv KCGI_OK
+for no error,
+.Dv KCGI_ENOMEM
+for an internal memory allocation failure.
+.Sh EXAMPLES
+The following creates a simple NUL-terminated buffer.
+It does not perform any error checking.
+.Bd -literal -offset indent
+struct kcgi_buf buf;
+
+memset(&buf, 0, sizeof(struct kcgi_buf));
+kcgi_buf_write("xyzzy", 5, &buf);
+puts(buf.buf); /* Emits "xyzzy" */
+free(buf.buf);
+.Ed
+.Sh SEE ALSO
+.Xr kcgi_buf_printf 3 ,
+.Xr kcgi_buf_putc 3 ,
+.Xr kcgi_buf_puts 3
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

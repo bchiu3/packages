@@ -1,0 +1,89 @@
+.\"	$Id: kcgixml.3,v 1.18 2020/04/09 11:03:24 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2017, 2020 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 9 2020 $
+.Dt KCGIXML 3
+.Os
+.Sh NAME
+.Nm kcgixml
+.Nd XML output for kcgi
+.Sh LIBRARY
+.Lb libkcgixml
+.Sh DESCRIPTION
+Produce output of XML content in a
+.Xr kcgi 3
+context allocated with
+.Xr khttp_parse 3 .
+.Pp
+To compile and link, use
+.Xr pkg-config 1
+as follows:
+.Bd -literal
+% cc `pkg-config --cflags kcgi-xml` -c sample.c
+% cc -o sample sample.o `pkg-config --libs kcgi-xml`
+.Ed
+.Pp
+All
+.Nm kcgixml
+sequences begin with
+.Xr kxml_open 3 ,
+emit the standard XML prologue with
+.Xr kxml_prologue 3 ,
+create XML nodes, and end with
+.Xr kxml_close 3 .
+.Sh EXAMPLES
+The following outputs a simple XML page.
+It assumes
+.Va r
+is a
+.Vt struct kreq
+pointer.
+For brevity, it does not do any error checking.
+.Bd -literal -offset indent
+const char *const elems[] =
+  { "foo", "bar", "baz" };
+khttp_head(r, kresps[KRESP_STATUS],
+  "%s", khttps[KHTTP_200]);
+khttp_head(r, kresps[KRESP_CONTENT_TYPE],
+  "%s", kmimetypes[KMIME_TEXT_XML]);
+khttp_body(r);
+kxml_open(&req, r, elems, 3);
+kxml_push(&req, 0); /* foo */
+kxml_puts(&req, "Hello, world");
+kxml_pop(&req);
+kxml_pushattrs(&req, 1, "baz", "xyzzy", NULL); /* bar */
+kxml_puts(&req, "Hello, world");
+kxml_pop(&req);
+kxml_close(&req);
+.Ed
+.Sh SEE ALSO
+.Xr kxml_close 3 ,
+.Xr kxml_open 3 ,
+.Xr kxml_pop 3 ,
+.Xr kxml_popall 3 ,
+.Xr kxml_prologue 3 ,
+.Xr kxml_push 3 ,
+.Xr kxml_pushnull 3 ,
+.Xr kxml_putc 3 ,
+.Xr kxml_puts 3 ,
+.Xr kxml_write 3
+.Sh STANDARDS
+The
+.Nm kcgixml
+functions conform to the XML 1.0 mark-up specification.
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

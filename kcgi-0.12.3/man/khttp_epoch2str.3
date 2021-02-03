@@ -1,0 +1,92 @@
+.\"	$Id: khttp_epoch2str.3,v 1.3 2020/05/10 15:21:00 kristaps Exp $
+.\"
+.\" Copyright (c) 2016--2017, 2020 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 10 2020 $
+.Dt KHTTP_EPOCH2STR 3
+.Os
+.Sh NAME
+.Nm khttp_epoch2str ,
+.Nm khttp_epoch2ustr
+.Nd convert time to a string
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft "char *"
+.Fo khttp_epoch2str
+.Fa "int64_t epoch"
+.Fa "char *buf"
+.Fa "size_t sz"
+.Fc
+.Ft "char *"
+.Fo khttp_epoch2ustr
+.Fa "int64_t epoch"
+.Fa "char *buf"
+.Fa "size_t sz"
+.Fc
+.Sh DESCRIPTION
+Format an
+.Fa epoch
+value
+.Pq seconds since Jan 1, 1970, 00:00:00 UTC
+into the buffer
+.Fa buf
+of size
+.Fa sz ,
+which should be greater than or equal to 64 bytes.
+If not enough space is given for the formatted date, the buffer is
+truncated to the available size.
+It is always NUL-terminated.
+.Pp
+The output of
+.Fn khttp_epoch2str
+conforms to RFC 5322:
+.Li Wed, 02 Oct 2002 13:00:00 GMT .
+However, the year may be greater than four digits or less than 1900,
+or even be negative, which is contrary to RFC 5322 section 3.3.
+.Pp
+.Fn khttp_epoch2ustr
+conforms to ISO 8601:
+.Li 2002-10-02T13:00:00Z ,
+again with the stipulation that the year may be greater than 4 digits or
+be less than zero.
+.Pp
+These deprecate the original
+.Fn kutil_epoch2str
+and
+.Fn kutil_epoch2utcstr
+functions, which had undefined behaviour in some corner cases.
+.Sh RETURN VALUES
+Returns a pointer to the input
+.Fa buf
+or
+.Dv NULL
+if
+.Fa buf
+is
+.Dv NULL ,
+.Fa sz
+is zero, or time conversion fails.
+.Sh SEE ALSO
+.Xr khttp_datetime2epoch 3 ,
+.Xr khttp_epoch2datetime 3 ,
+.Xr khttp_epoch2tms 3
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

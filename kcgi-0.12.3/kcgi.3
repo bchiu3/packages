@@ -1,0 +1,383 @@
+.\"	$Id: kcgi.3,v 1.43 2020/10/17 12:02:58 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2018 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: October 17 2020 $
+.Dt KCGI 3
+.Os
+.Sh NAME
+.Nm kcgi
+.Nd minimal CGI and FastCGI library in C
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Fd #define KCGI_VMAJOR x
+.Fd #define KCGI_VMINOR y
+.Fd #define KCGI_VBUILD z
+.Fd #define KCGI_VERSION "x.y.z"
+.Fd #define KCGI_VSTAMP xxxyyyzzz
+.Sh DESCRIPTION
+The
+.Nm kcgi
+library handles the CGI or FastCGI environment for C web applications.
+Interfacing applications generally work as follows:
+.Bl -enum
+.It
+Call
+.Xr khttp_parse 3
+as early as possible.
+This will parse and validate input fields and cookies with the
+.Xr kvalid_string 3
+family of functions or those provided by the calling application.
+It will do so
+.Em in memory ,
+so enormous requests (e.g., files) will occur entirely in memory!
+It also sets up the HTTP environment: compression, paths, MIME types, and so on.
+.It
+Process input fields by examining the
+.Vt "struct kpair"
+elements.
+.It
+Emit HTTP headers with
+.Xr khttp_head 3 ,
+followed by
+.Xr khttp_body 3
+to begin the HTTP body.
+.It
+Emit HTTP body output using the
+.Xr khttp_template 3
+templating system, the
+.Xr khttp_write 3
+family for general HTTP content, and/or an external library such as
+.Xr kcgihtml 3 .
+.Em \&Do not
+use
+.Xr printf 3
+or other functions to append to standard output:
+.Nm kcgi
+will automatically compress output if requested by the client, and
+overriding the output stream will circumvent this behaviour and might
+mix compressed and uncompressed data.
+.It
+Call
+.Xr khttp_free 3
+to clean up.
+.El
+.Pp
+It can also accept FastCGI connections in a manner similar to the above,
+except that the parse routine is run within a loop.
+.Bl -enum
+.It
+Call
+.Xr khttp_fcgi_init 3
+as early as possible.
+.It
+Iterate over
+.Xr khttp_fcgi_parse 3
+for as many connections as desired, performing any processing on the
+created request.
+Each successful parse must be matched with
+.Xr khttp_free 3 .
+.It
+Call
+.Xr khttp_fcgi_free 3
+when all processing is complete.
+.El
+.Pp
+To compile applications with
+.Nm ,
+include the
+.Pa kcgi.h
+as follows:
+.Bd -literal
+#include <sys/types.h> /* size_t, ssize_t */
+#include <stdarg.h> /* va_list */
+#include <stdint.h> /* int64_t */
+#include <kcgi.h>
+.Ed
+.Pp
+To compile and link, use
+.Xr pkg-config 1 :
+.Bd -literal
+% cc `pkg-config --cflags kcgi` -c -o sample.o sample.c
+% cc -o sample sample.o `pkg-config --libs kcgi`
+.Ed
+.Pp
+If the library will be statically linked (e.g., for running within a
+.Xr chroot 2 ) ,
+and assuming you'll use the
+.Xr kcgihtml 3
+library, link as follows:
+.Bd -literal
+% cc `pkg-config --cflags kcgi-html` -c -o sample.o sample.c
+% cc -static -o sample sample.o `pkg-config --static --libs kcgi-html`
+.Ed
+.Pp
+The current version of the library is defined in
+.Dv KCGI_VERSION
+as a string of major number, minor number, and build.
+These values are available seperately as
+.Dv KCGI_VMAJOR ,
+.Dv KCGI_VMINOR ,
+and
+.Dv KCGI_VBUILD ,
+respectively.
+A numeric concatenation of the version is defined as
+.Dv KCGI_VSTAMP ,
+which may be used to test for version number applicability.
+.Ss Pledge Promises
+The
+.Nm kcgi
+library is built to operate in security-sensitive environments, including
+.Xr pledge 2
+on
+.Ox .
+The following is a list of all required promises.
+.Bl -tag -width Ds
+.It Va cpath wpath
+.Xr kutil_openlog 3
+requiress file-system access to produce its log.
+.It Va proc
+.Xr khttp_parse 3
+and
+.Xr khttp_fcgi_init 3
+must create child processes.
+.It Va stdio
+Required by essentially all
+.Nm
+functions.
+.It Va rpath
+.Xr khttp_template 3
+and
+.Xr khttp_templatex 3
+need access to their template files.
+.It Va recvfd
+.Xr khttp_fcgi_init 3
+needs these for inheritence by its child processes and
+.Xr khttp_fcgi_parse 3
+needs this for accepting the end-point descriptor for each connection.
+.It Va unix sendfd
+.Xr khttp_fcgi_init 3
+needs these for inheritence by its child processes.
+.El
+.Sh EXAMPLES
+The following simple example assumes that
+.Pa kcgi.h
+is in the compiler's include path.
+None of them perform error checking: each call into the
+.Nm kcgi
+library should have its error code checked!
+.Pp
+The following does nothing but emit
+.Dq Hello, world!
+to the output.
+.Bd -literal
+#include <sys/types.h> /* size_t, ssize_t */
+#include <stdarg.h> /* va_list */
+#include <stddef.h> /* NULL */
+#include <stdint.h> /* int64_t */
+#include <kcgi.h>
+
+int main(void) {
+  struct kreq r;
+  const char *page = "index";
+
+  if (khttp_parse(&r, NULL, 0, &page, 1, 0) != KCGI_OK)
+      return 1;
+
+  khttp_head(&r, kresps[KRESP_STATUS],
+      "%s", khttps[KHTTP_200]);
+  khttp_head(&r, kresps[KRESP_CONTENT_TYPE],
+      "%s", kmimetypes[r.mime]);
+  khttp_body(&r);
+  khttp_puts(&r, "Hello, world!");
+
+  khttp_free(&r);
+  return 0;
+}
+.Ed
+.Pp
+This can be extended to work with the FastCGI interface by allowing the
+request parser to operate within a loop.
+.Bd -literal
+#include <sys/types.h> /* size_t, ssize_t */
+#include <stdarg.h> /* va_list */
+#include <stddef.h> /* NULL */
+#include <stdint.h> /* int64_t */
+#include <kcgi.h>
+
+int main(void) {
+  struct kreq r;
+  struct kfcgi *fcgi;
+  const char *page = "index";
+
+  if (khttp_fcgi_init(&fcgi, NULL, 0, &page, 1, 0) != KCGI_OK)
+      return 1;
+
+  while (khttp_fcgi_parse(fcgi, &r) == KCGI_OK) {
+    khttp_head(&r, kresps[KRESP_STATUS],
+        "%s", khttps[KHTTP_200]);
+    khttp_head(&r, kresps[KRESP_CONTENT_TYPE],
+        "%s", kmimetypes[r.mime]);
+    khttp_body(&r);
+    khttp_puts(&r, "Hello, world!");
+    khttp_free(&r);
+  }
+
+  khttp_fcgi_free(fcgi);
+  return 0;
+}
+.Ed
+.Pp
+In a more complicated example,
+.Nm
+accepts a single parameter
+.Dq string
+to validate and display.
+This might be provided as part of an HTML form or directly as part of
+the URL query string.
+.Bd -literal
+#include <sys/types.h> /* size_t, ssize_t */
+#include <stdarg.h> /* va_list */
+#include <stdint.h> /* int64_t */
+#include <kcgi.h>
+
+int main(void) {
+  struct kreq r;
+  struct kpair *p;
+  const char *page = "index";
+  struct kvalid key = { kvalid_stringne, "string" };
+
+  if (khttp_parse(&r, &key, 1, &page, 1, 0) != KCGI_OK)
+      return 1;
+
+  khttp_head(&r, kresps[KRESP_STATUS],
+      "%s", khttps[KHTTP_200]);
+  khttp_head(&r, kresps[KRESP_CONTENT_TYPE],
+      "%s", kmimetypes[r.mime]);
+  khttp_body(&r);
+  khttp_puts(&r, "Result: ");
+  if ((p = r.fieldmap[0]))
+      khttp_puts(&r, p->parsed.s);
+  else if (r.fieldnmap[0])
+      khttp_puts(&r, "bad parse");
+  else
+      khttp_puts(&r, "no value");
+
+  khttp_free(&r);
+  return 0;
+}
+.Ed
+.Pp
+Applications will usually specify an array of key-value pairs to
+validate; or in the event of web services, a default validator (empty
+string) for the full HTTP message body.
+.Sh SEE ALSO
+.Xr kcgi_buf_printf 3 ,
+.Xr kcgi_buf_putc 3 ,
+.Xr kcgi_buf_puts 3 ,
+.Xr kcgi_buf_write 3 ,
+.Xr kcgi_strerror 3 ,
+.Xr kcgi_writer_disable 3 ,
+.Xr kcgihtml 3 ,
+.Xr kcgijson 3 ,
+.Xr kcgiregress 3 ,
+.Xr kcgixml 3 ,
+.Xr khttp_body 3 ,
+.Xr khttp_fcgi_free 3 ,
+.Xr khttp_fcgi_init 3 ,
+.Xr khttp_fcgi_parse 3 ,
+.Xr khttp_fcgi_test 3 ,
+.Xr khttp_free 3 ,
+.Xr khttp_head 3 ,
+.Xr khttp_parse 3 ,
+.Xr khttp_printf 3 ,
+.Xr khttp_putc 3 ,
+.Xr khttp_puts 3 ,
+.Xr khttp_template 3 ,
+.Xr khttp_templatex 3 ,
+.Xr khttp_write 3 ,
+.Xr khttpbasic_validate 3 ,
+.Xr khttpdigest_validate 3 ,
+.Xr kmalloc 3 ,
+.Xr khttp_epoch2str 3 ,
+.Xr kutil_invalidate 3 ,
+.Xr kutil_log 3 ,
+.Xr kutil_openlog 3 ,
+.Xr khttp_urlencode 3 ,
+.Xr kvalid_string 3 ,
+.Xr kfcgi 8
+.Sh STANDARDS
+Many standards are involved in the
+.Nm
+library, most significantly being draft RFC 3875,
+.Dq The Common Gateway Interface (CGI) Version 1.1 ,
+and the
+.Dq FastCGI Specification ,
+version 1.0, published 29 April 1996.
+.Bl -bullet
+.It
+Cookies are parsed according to
+.Dq HTTP State Management Mechanism ,
+RFC 6265.
+However, quoted cookies are
+.Em not
+supported.
+.It
+The
+.Dq Authentication
+header is parsed for digest or basic tokens as defined by RFC 2617,
+.Dq HTTP Authentication: Basic and Digest Access Authentication .
+.It
+The partial multipart form data support is defined by RFC 2388,
+.Dq Returning Values from Forms: multipart/form-data ,
+which is further defined by RFCs 2045 and 2046,
+.Dq Multipurpose Internet Mail Extensions .
+.It
+MIME type names are registered with IANA.
+.It
+URLs are formatted according to RFC 1630,
+.Dq Universal Resource Identifiers in WWW .
+.It
+HTTP response headers are standardised in RFC 2616,
+.Dq HTTP/1.1
+and further in RFC 4229,
+.Dq HTTP Header Field Registrations .
+.It
+Permanent URI schemes are registered with IANA.
+.It
+The
+.Lk https://kristaps.bsd.lv/kcgi/extending01.html "FastCGI Extensions for Management Control" .
+.It
+HTTP dates (logging and date-time management) are specified by
+.Dq RFC 822 .
+.It
+URL encoding and decoding is defined by RFC 3986,
+.Dq Uniform Resource Identifier (URI): Generic Syntax .
+.El
+.Pp
+Additional HTTP methods are defined by RFC 4918,
+.Dq HTTP Extensions for Web Distributed Authoring and Versioning ;
+and RFC 4791 ,
+.Dq Calendaring Extensions to WebDAV .
+.Sh AUTHORS
+The
+.Nm
+library was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

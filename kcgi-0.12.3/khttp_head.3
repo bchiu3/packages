@@ -1,0 +1,130 @@
+.\"	$Id: khttp_head.3,v 1.20 2020/07/11 14:14:15 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2017 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 11 2020 $
+.Dt KHTTP_HEAD 3
+.Os
+.Sh NAME
+.Nm khttp_head
+.Nd emit one HTTP header for kcgi
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft enum kcgi_err
+.Fo khttp_head
+.Fa "struct kreq *req"
+.Fa "const char *key"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
+.Vt extern const char *const kresps[KRESP__MAX];
+.Sh DESCRIPTION
+The
+.Fn khttp_head
+function takes a
+.Xr kcgi 3
+context
+.Fa req
+that was previously initialised by
+.Xr khttp_parse 3
+and emits one HTTP header with the given HTTP response
+.Fa key .
+The
+.Fa fmt
+string and variable arguments, which follow
+.Xr printf 3
+syntax, form the corresponding value in the HTTP response.
+This function may only be invoked prior to
+.Xr khttp_body 3 ;
+otherwise, its behaviour is undefined.
+.Pp
+The
+.Va kresps
+global array, indexed with the
+.Dv KRESP_*
+symbolic constants defined in
+.In kcgi.h ,
+provides standard HTTP key names.
+Use it for the
+.Fa key
+argument to avoid typos.
+.Pp
+See
+.Xr khttp_body 3
+for a discussion on the
+.Qq Content-Encoding
+header: do not specify this header before doing so!
+.Sh RETURN VALUES
+The
+.Fn khttp_head
+function returns an
+.Ft enum kcgi_err
+indicating the error state.
+.Bl -tag -width Ds
+.It Dv KCGI_OK
+Success (not an error).
+.It Dv KCGI_ENOMEM
+Internal memory allocation failure.
+.It Dv KCGI_SYSTEM
+Internal system error writing to the output stream.
+.It Dv KCGI_HUP
+The output connection has been terminated.
+For FastCGI connections, the current connection should be released with
+.Xr khttp_free 3
+and parse loop reentered.
+.El
+.Sh EXAMPLES
+To emit a session cookie (one-year expiration date) with key
+.Ar ckey
+and value
+.Ar cval
+for the global path, one may invoke the following.
+Assume that
+.Fa r
+is a pointer to a
+.Ft struct kreq
+successfully initialised by
+.Xr khttp_parse 3 .
+.Bd -literal
+const char *ckey = "foo", *cval = "bar";
+char buf[64];
+
+khttp_epoch2str(time(NULL) + 31536000, buf, 64);
+
+khttp_head(r, kresps[KRESP_SET_COOKIE],
+  "%s=%s; path=/; expires=%s", ckey, cval, buf);
+.Ed
+.Sh SEE ALSO
+.Xr kcgi 3 ,
+.Xr khttp_body 3 ,
+.Xr khttp_parse 3
+.Sh STANDARDS
+RFC 2616, section 14:
+.Dq Header Field Definitions .
+.Pp
+The example references
+RFC 6265, section 4.1:
+.Dq Set-Cookie .
+.Sh AUTHORS
+The
+.Fn khttp_head
+function was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

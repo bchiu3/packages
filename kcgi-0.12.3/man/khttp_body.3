@@ -1,0 +1,153 @@
+.\"	$Id: khttp_body.3,v 1.17 2018/09/28 13:37:03 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2017 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 28 2018 $
+.Dt KHTTP_BODY 3
+.Os
+.Sh NAME
+.Nm khttp_body ,
+.Nm khttp_body_compress
+.Nd close the HTTP header sequence for kcgi
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft enum kcgi_err
+.Fo khttp_body
+.Fa "struct kreq *req"
+.Fc
+.Ft enum kcgi_err
+.Fo khttp_body_compress
+.Fa "struct kreq *req"
+.Fa "int compress"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn khttp_body
+and
+.Fn khttp_body_compress
+functions terminate the zero or more
+.Xr khttp_head 3
+calls for a
+.Xr kcgi 3
+context
+.Fa req .
+After these functions, invoking
+.Xr khttp_head 3
+or invoking
+.Fn khttp_body
+or
+.Fn khttp_body_compress
+again results in undefined behaviour.
+.Pp
+The
+.Fn khttp_body
+function checks whether compression should be enabled by examining
+request headers.
+If applicable, it emits the appropriate content encoding header and
+enables compressed output for subsequent
+.Xr khttp_write 3
+calls.
+.Pp
+The
+.Fn khttp_body_compress
+function accepts the
+.Fa compress
+argument which, if zero, disables compressed output for subsequent
+.Xr khttp_write 3
+calls.
+This is appropriate for caller-managed compression, such as when sending
+pre-compressed files.
+If non-zero, compressed output is enabled.
+In either case, content encoding headers must be managed by the caller.
+.Sh RETURN VALUES
+The
+.Fn khttp_body
+and
+.Fn khttp_body_compress
+functions return an
+.Ft enum kcgi_err
+indicating the error state.
+.Bl -tag -width Ds
+.It Dv KCGI_OK
+Success (not an error).
+.It Dv KCGI_ENOMEM
+Internal memory allocation failure.
+.It Dv KCGI_SYSTEM
+Internal system error writing to the output stream.
+.It Dv KCGI_HUP
+The output connection has been terminated.
+For FastCGI connections, the current connection should be released with
+.Xr khttp_free 3
+and parse loop reentered.
+.It Dv KCGI_FORM
+Returned by
+.Fn khttp_body_compress
+if compression was requested but is not provided by the operating
+system.
+.El
+.Sh EXAMPLES
+Write out an HTTP header sequence and text content with automatic
+compression detection.
+Assume that
+.Fa r
+is a pointer to a
+.Ft struct kreq
+successfully initialised by
+.Xr khttp_parse 3 .
+.Bd -literal
+khttp_head(r, kresps[KRESP_STATUS],
+  "%s", khttps[KHTTP_200]);
+khttp_head(r, kresps[KRESP_CONTENT_TYPE],
+  "%s", kmimetypes[KMIME_TEXT_PLAIN]);
+khttp_body(r);
+khttp_puts(r, "Hello, world!\en");
+.Ed
+.Pp
+To explicitly disable compression:
+.Bd -literal
+khttp_head(r, kresps[KRESP_STATUS],
+  "%s", khttps[KHTTP_200]);
+khttp_head(r, kresps[KRESP_CONTENT_TYPE],
+  "%s", kmimetypes[KMIME_TEXT_PLAIN]);
+khttp_body_compress(r, 0);
+khttp_puts(r, "Hello, world!\en");
+.Ed
+.Pp
+To disable compression, but emit a compressed file:
+.Bd -literal
+khttp_head(r, kresps[KRESP_STATUS],
+  "%s", khttps[KHTTP_200]);
+khttp_head(r, kresps[KRESP_CONTENT_TYPE],
+  "%s", kmimetypes[KMIME_TEXT_PLAIN]);
+khttp_head(r, kresps[KRESP_CONTENT_ENCODING],
+  "%s", "gzip");
+khttp_body_compress(r, 0);
+khttp_template(r, NULL, "compressed.txt.gz");
+.Ed
+.Sh SEE ALSO
+.Xr kcgi 3 ,
+.Xr khttp_head 3 ,
+.Xr zlib 3
+.Sh AUTHORS
+The
+.Fn khttp_body
+function was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

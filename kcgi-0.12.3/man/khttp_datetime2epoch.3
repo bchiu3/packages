@@ -1,0 +1,100 @@
+.\"	$Id: khttp_datetime2epoch.3,v 1.3 2020/05/11 10:56:18 kristaps Exp $
+.\"
+.\" Copyright (c) 2020 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 11 2020 $
+.Dt KHTTP_DATETIME2EPOCH 3
+.Os
+.Sh NAME
+.Nm khttp_date2epoch ,
+.Nm khttp_datetime2epoch
+.Nd validate and convert date and time
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft int
+.Fo khttp_date2epoch
+.Fa "int64_t *res"
+.Fa "int64_t day"
+.Fa "int64_t mon"
+.Fa "int64_t year"
+.Fa "int64_t hour"
+.Fa "int64_t min"
+.Fa "int64_t sec"
+.Fc
+.Ft int
+.Fo khttp_datetime2epoch
+.Fa "int64_t *res"
+.Fa "int64_t day"
+.Fa "int64_t mon"
+.Fa "int64_t year"
+.Fa "int64_t hour"
+.Fa "int64_t min"
+.Fa "int64_t sec"
+.Fc
+.Sh DESCRIPTION
+Convert broken-day date and time values into seconds since 00:00:00
+UTC, 1970-01-01.
+The date and time values are accepted as UTC.
+.Fn khttp_date2epoch
+is equivalent to
+.Fn khttp_datetime2epoch
+but with zero
+.Fa hour ,
+.Fa min ,
+and
+.Fa sec
+arguments.
+If
+.Fa res
+is
+.Dv NULL ,
+simply check the time values for correctness.
+.Pp
+Date correctness means that input values fall within the following
+acceptable ranges:
+.Bl -column hourx aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -offset indent
+.It Fa sec Ta seconds 0\(en59
+.It Fa min Ta minutes 0\(en59
+.It Fa hour Ta hours 0\(en23
+.It Fa day Ta day of month 1\(en31
+.It Fa mon Ta month 1\(en12
+.It Fa year Ta year -2.9e11\(en2.9e11
+.El
+.Pp
+The year bound is the maximum year value that may be converted to
+seconds for a 64-bit integer.
+.Pp
+These deprecate
+.Fn kutil_date2epoch ,
+.Fn kutil_date_check ,
+.Fn kutil_datetime2epoch ,
+and
+.Fn kutil_datetime_check ,
+which should no longer be used.
+.Sh RETURN VALUES
+Return zero if the given values do not correspond to a valid date and time,
+non-zero otherwise.
+.Sh SEE ALSO
+.Xr khttp_epoch2datetime 3 ,
+.Xr khttp_epoch2str 3 ,
+.Xr khttp_epoch2tms 3
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

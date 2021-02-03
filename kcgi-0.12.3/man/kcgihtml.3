@@ -1,0 +1,118 @@
+.\"	$Id: kcgihtml.3,v 1.28 2020/04/09 11:03:24 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2015, 2017, 2020 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 9 2020 $
+.Dt KCGIHTML 3
+.Os
+.Sh NAME
+.Nm kcgihtml
+.Nd HTML output for kcgi
+.Sh LIBRARY
+.Lb libkcgihtml
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.In kcgihtml.h
+.Sh DESCRIPTION
+Produce output of XML-formed HTML5 content in a
+.Xr kcgi 3
+context allocated with
+.Xr khttp_parse 3 .
+.Pp
+To compile and link, use
+.Xr pkg-config 1
+as follows:
+.Bd -literal
+% cc `pkg-config --cflags kcgi-html` -c sample.c
+% cc -o sample sample.o `pkg-config --libs kcgi-html`
+.Ed
+.Pp
+All of the
+.Nm kcgihtml
+functions accept a
+.Vt "struct khtmlreq"
+object.
+To use this properly, open a context with
+.Fn khtml_open ,
+then use whichever functions you wish, then close the context with
+.Fn khtml_close .
+.Sh EXAMPLES
+The following outputs a simple HTML page.
+It assumes
+.Va r
+is a
+.Vt struct kreq
+pointer.
+For completeness, this restricts all future writes to HTML.
+.Bd -literal -offset indent
+khttp_head(r, kresps[KRESP_STATUS],
+  "%s", khttps[KHTTP_200]);
+khttp_head(r, kresps[KRESP_CONTENT_TYPE],
+  "%s", kmimetypes[KMIME_TEXT_HTML]);
+khttp_body(r);
+
+khtml_open(&req, r, 0);
+kcgi_writer_disable(r);
+
+khtml_elem(&req, KELEM_DOCTYPE);
+khtml_elem(&req, KELEM_HTML);
+
+khtml_elem(&req, KELEM_HEAD);
+khtml_elem(&req, KELEM_TITLE);
+khtml_puts(&req, "Hello, world");
+khtml_closeelem(&req, 1); /* title */
+khtml_attr(&req, KELEM_LINK,
+  KATTR_REL, "stylesheet",
+  KATTR_HREF, "/style.css", KATTR__MAX);
+khtml_closeelem(&req, 1); /* head */
+
+khtml_elem(&req, KELEM_BODY);
+khtml_elem(&req, KELEM_P);
+khtml_puts(&req, "Hello, world");
+khtml_entity(&req, KENTITY_mdash);
+khtml_printf(&req, "%s", "how are you?");
+khtml_putc(&req, ' ');
+khtml_ncr(&req, 0x1F601); /* smiley */
+
+khtml_close(&req); /* close all scopes */
+.Ed
+.Pp
+The element name comment alongside
+.Fn html_closeelem
+hints as to which scope is being closed.
+.Sh SEE ALSO
+.Xr khtml_attr 3 ,
+.Xr khtml_close 3 ,
+.Xr khtml_closeelem 3 ,
+.Xr khtml_closeto 3 ,
+.Xr khtml_double 3 ,
+.Xr khtml_elem 3 ,
+.Xr khtml_elemat 3 ,
+.Xr khtml_entity 3 ,
+.Xr khtml_int 3 ,
+.Xr khtml_ncr 3 ,
+.Xr khtml_open 3 ,
+.Xr khtml_printf 3 ,
+.Xr khtml_putc 3 ,
+.Xr khtml_puts 3 ,
+.Xr khtml_write 3
+.Sh STANDARDS
+HTML5 compatible with the draft standard of February 2014.
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .

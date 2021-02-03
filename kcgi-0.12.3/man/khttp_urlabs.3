@@ -1,0 +1,156 @@
+.\"	$Id: khttp_urlabs.3,v 1.3 2020/04/10 10:33:13 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2017 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 10 2020 $
+.Dt KHTTP_URLABS 3
+.Os
+.Sh NAME
+.Nm khttp_urlabs ,
+.Nm khttp_vurlabs
+.Nd URL formatting for kcgi
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft "char *"
+.Fo khttp_urlabs
+.Fa "enum kscheme scheme"
+.Fa "const char *host"
+.Fa "uint16_t port"
+.Fa "const char *path"
+.Fa "..."
+.Fc
+.Ft "char *"
+.Fo khttp_vurlabs
+.Fa "enum kscheme scheme"
+.Fa "const char *host"
+.Fa "uint16_t port"
+.Fa "const char *path"
+.Fa "va_list ap"
+.Fc
+.Sh DESCRIPTION
+Format an absolute (full) URL.
+The
+.Fa host
+is in some standards called the
+.Qq authority .
+.Pp
+.Dl Fa scheme Ns :// Ns Fa host : Ns Fa port Ns / Ns Fa path Ns ?key=val
+.Dl Fa scheme Ns :// Ns Fa host : Ns Fa port Ns / Ns Fa path
+.Dl Fa scheme : Ns Fa path
+.Pp
+Passing a
+.Dv NULL
+or empty
+.Fa host
+will omit the
+.Qq // ,
+.Fa host ,
+.Fa port
+component.
+.Pp
+If the
+.Fa host
+is non-empty and not
+.Dv NULL
+and the
+.Fa path
+is also non-empty and not
+.Dv NULL ,
+the
+.Fa path
+is prepended with a mandatory slash.
+.Pp
+If the
+.Fa port
+is zero, it is omitted.
+The
+.Fa port
+is only used if
+.Fa host
+is non-empty and not
+.Dv NULL .
+.Pp
+The variable arguments are arranged in pairs terminated by a single
+.Dv NULL .
+The first of each pair is the query string key, the second is the value.
+Both are
+.Vt "char *" .
+A
+.Dv NULL
+query string value is rendered as an empty string.
+.Pp
+Only the query string pairs are URL-encoded, so the caller must make
+sure that the characters in
+.Fa host
+and
+.Fa path
+are valid.
+.Pp
+The deprecated form of these functions,
+.Fn kutil_urlabs ,
+should no longer be used.
+.Sh RETURN VALUES
+Return newly-allocated strings that must be freed with
+.Xr free 3
+or
+.Dv NULL
+if allocation fails.
+.Sh EXAMPLES
+To print a full URL:
+.Pp
+.Dl khttp_urlabs(KSCHEME_HTTPS, "foo.com", 80, "b", "c", "d", NULL);
+.Pp
+This assigns
+.Li https://foo.com:80/b?c=d .
+.Pp
+Setting the port to zero eliminates the port:
+.Pp
+.Dl khttp_urlabs(KSCHEME_HTTPS, "foo.com", 0, "b", "c", "d", NULL);
+.Pp
+This assigns
+.Li https://foo.com/b?c=d .
+.Pp
+An empty path component ends with the domain (or query string).
+.Pp
+.Dl khttp_urlabs(KSCHEME_HTTPS, "foo.com", 0, "", "c", "d", NULL);
+.Pp
+This assigns
+.Li https://foo.com?c=d .
+.Pp
+To use a host-less scheme, specify a
+.Dv NULL
+or empty host:
+.Pp
+.Dl khttp_urlabs(KSCHEME_MAILTO, NULL, 0, "k@b.com", NULL);
+.Pp
+This assigns
+.Li mailto:k@b.com .
+.Sh AUTHORS
+Written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
+.Sh CAVEATS
+These functions can currently be used to create semantically invalid
+URLs such as
+.Li https:?foo=bar
+by omitting components required for the scheme.
+Semantically-correct URLs are the responsibility of the caller.
+This behaviour may be verified for correctness in later versions of the
+software.

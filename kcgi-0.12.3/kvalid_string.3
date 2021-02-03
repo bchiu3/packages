@@ -1,0 +1,155 @@
+.\"	$Id: kvalid_string.3,v 1.20 2020/02/10 13:42:42 kristaps Exp $
+.\"
+.\" Copyright (c) 2014, 2017 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 10 2020 $
+.Dt KVALID_STRING 3
+.Os
+.Sh NAME
+.Nm kvalid_bit ,
+.Nm kvalid_date ,
+.Nm kvalid_double ,
+.Nm kvalid_email ,
+.Nm kvalid_int ,
+.Nm kvalid_string ,
+.Nm kvalid_stringne ,
+.Nm kvalid_udouble ,
+.Nm kvalid_uint
+.Nd predefined validation functions for kcgi
+.Sh LIBRARY
+.Lb libkcgi
+.Sh SYNOPSIS
+.In sys/types.h
+.In stdarg.h
+.In stdint.h
+.In kcgi.h
+.Ft int
+.Fn kvalid_bit "struct kpair *kp"
+.Ft int
+.Fn kvalid_date "struct kpair *kp"
+.Ft int
+.Fn kvalid_double "struct kpair *kp"
+.Ft int
+.Fn kvalid_email "struct kpair *kp"
+.Ft int
+.Fn kvalid_int "struct kpair *kp"
+.Ft int
+.Fn kvalid_string "struct kpair *kp"
+.Ft int
+.Fn kvalid_stringne "struct kpair *kp"
+.Ft int
+.Fn kvalid_udouble "struct kpair *kp"
+.Ft int
+.Fn kvalid_uint "struct kpair *kp"
+.Sh DESCRIPTION
+The predefined
+.Xr kcgi 3
+validation functions check
+.Fa kp->val
+and
+.Fa kp->valsz .
+On successful validation, the appropriate
+.Fa kp->parsed
+field is set to the validated value and its type stored in
+.Fa kp->type .
+These functions are designed for use in the
+.Fa valid
+field of
+.Vt struct kvalid ,
+documented in
+.Xr khttp_parse 3 .
+.Pp
+The validation functions perform the following validations:
+.Bl -tag -width Ds
+.It Fn kvalid_bit
+A bit number in the range from 1 to 64 (first bit, second bit, and so
+on) or 0 to indicate no bit.
+Sets
+.Dv KPAIR_INTEGER .
+.It Fn kvalid_date
+Converts an ISO 8601
+.Ar YYYY Ns \- Ns Ar MM Ns \- Ns Ar DD
+date to the number of seconds since or before the UNIX Epoch,
+1970-01-01.
+Dates before 1582 are not accepted.
+Beyond syntax, dates are checked for correctness (days in month, leap
+years, etc.).
+Sets
+.Dv KPAIR_INTEGER .
+.It Fn kvalid_double
+A signed double-precision floating-point number in
+.Xr strtod 3
+format.
+Sets
+.Dv KPAIR_DOUBLE .
+.It Fn kvalid_email
+A loosely-validated e-mail address consisting of at most 254 characters,
+with a user part (at least one character) and a domain part (at least one
+character).
+This will allow
+.Em many
+invalid e-mail addresses, but will not prevent any otherwise valid ones
+by over-strict testing.
+The validated string is trimmed for white-space and lowercased.
+Sets
+.Dv KPAIR_STRING .
+.It Fn kvalid_int
+A 64-bit signed integer.
+Sets
+.Dv KPAIR_INTEGER .
+.It Fn kvalid_string
+A NUL-terminated string that is allowed to be empty.
+The validation fails if
+.Fa kp->valsz
+does not match
+.Fn strlen kp->val .
+Sets
+.Dv KPAIR_STRING .
+.It Fn kvalid_stringne
+The same as
+.Fn kvalid_string
+except that validation fails if the string is empty.
+.It Fn kvalid_udouble
+The same as
+.Fn kvalid_double
+except that validation fails if the number is zero or negative.
+.It Fn kvalid_uint
+The same as
+.Fn kvalid_int
+except that validation fails if the number is negative.
+The range does not extend to
+.Dv UINT64_MAX ,
+but is limited to
+.Dv INT64_MAX .
+.El
+.Sh RETURN VALUES
+All validation functions return 1 if validation succeeds or 0 if it
+fails.
+.Sh SEE ALSO
+.Xr kcgi 3 ,
+.Xr khttp_fcgi_init 3 ,
+.Xr khttp_parse 3 ,
+.Xr kutil_invalidate 3
+.Sh AUTHORS
+These functions were written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
+.Sh BUGS
+The functions
+.Fn kvalid_double
+and
+.Fn kvalid_udouble
+might attempt to access locale information, which might fail in a
+sandbox.
