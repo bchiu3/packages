@@ -10,6 +10,7 @@ mypath=$(dirname $(readlink -f $0))
 			--enable-asm=no \
 			--enable-opensslextra=yes \
 			--enable-harden=no \
+			--enable-sha512 \
 			--enable-singlethreaded=yes
 
 make -j 8
