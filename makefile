@@ -28,13 +28,13 @@ bearssl: build_dir
 	cp bearssl-0.6/build/libbearssl.a build/lib
 	cp bearssl-0.6/inc/* build/include
 
-curl: bearssl
+curl: 
 	cd curl-7.72.0 && ./build.sh
 	rm -f build/lib/libcurl.la
 	rm -rf build/lib/pkgconfig
 
 
-tiny-curl: bearssl
+tiny-curl: 
 	cd tiny-curl-7.72.0 && ./build.sh
 	rm -f build/lib/libcurl.la
 	rm -rf build/lib/pkgconfig
