@@ -78,6 +78,12 @@ uv:
 kcgi:
 	cd kcgi-0.12.3 && ./build.sh
 
+opus:
+	cd opus-1.3.1 && ./build.sh
+
+sodium:
+	cd libsodium-1.0.18 && ./build.sh
+
 clean:
 	rm -rf build
 	make -C cs50 clean
@@ -114,6 +120,12 @@ clean:
 	fi
 	cd libwebsockets-2.4.2 && rm -rf build
 	cd libwebsockets-3.2.2 && rm -rf build
+	if [ -f opus-1.3.1/Makefile ]; then \
+		make -C opus-1.3.1 distclean; \
+	fi
+	if [ -f libsodium-1.0.18/Makefile ]; then \
+		make -C libsodium-1.0.18 distclean; \
+	fi
 	#bmake -C kcgi-0.12.3 distclean;
 
 install:
