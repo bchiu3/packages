@@ -12,11 +12,6 @@ build_dir:
 	mkdir -p build/include
 	mkdir -p build/lib
 
-cs50:
-	make -C cs50
-	cp cs50/build/include/cs50.h build/include
-	cp cs50/build/lib/libcs50.a  build/lib
-
 ncurses:
 	cd ncurses-6.2 && ./build.sh
 
@@ -86,7 +81,6 @@ sodium:
 
 clean:
 	rm -rf build
-	make -C cs50 clean
 	make -C bearssl-0.6 clean
 	make -C curl-websocket clean
 	make -C mbedtls-2.24.0 clean
