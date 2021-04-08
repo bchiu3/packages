@@ -15,5 +15,5 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 			--disable-soname-versions \
 			--enable-minimal
 
-env STENSAL_COMPILER_ENCRYPT=0 make V=1
+make V=1
 make install
