@@ -19,9 +19,15 @@ conio:
 	cp conio.h/conio.h build/include
 
 bearssl: build_dir
-	make -C bearssl-0.6 -j $(N)
-	cp bearssl-0.6/build/libbearssl.a build/lib
-	cp bearssl-0.6/inc/* build/include
+	make -C bearssl-0.6x -j $(N)
+	cp bearssl-0.6x/build/libbearssl.a build/lib
+	cp bearssl-0.6x/inc/* build/include
+
+bearssl6: build_dir
+	make -C bearssl-0.6x -j $(N)
+	cp bearssl-0.6x/build/libbearssl.a build/lib
+	cp bearssl-0.6x/inc/* build/include
+
 
 curl: 
 	cd curl-7.72.0 && ./build.sh
@@ -82,6 +88,7 @@ sodium:
 clean:
 	rm -rf build
 	make -C bearssl-0.6 clean
+	make -C bearssl-0.6x clean
 	make -C curl-websocket clean
 	make -C mbedtls-2.24.0 clean
 	if [ -f curl-7.72.0/Makefile ]; then \
