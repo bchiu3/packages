@@ -2028,10 +2028,16 @@ unsigned br_ssl_engine_current_state(const br_ssl_engine_context *cc);
  * \param cc   SSL engine context.
  * \return  0, or a non-zero error code.
  */
-static inline int
+static int
 br_ssl_engine_last_error(const br_ssl_engine_context *cc)
 {
 	return cc->err;
+}
+
+static int
+br_ssl_engine_iomode(const br_ssl_engine_context *cc)
+{
+	return cc->iomode;
 }
 
 /*
