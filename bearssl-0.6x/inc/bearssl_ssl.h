@@ -2034,7 +2034,7 @@ br_ssl_engine_last_error(const br_ssl_engine_context *cc)
 	return cc->err;
 }
 
-static int
+static inline int
 br_ssl_engine_iomode(const br_ssl_engine_context *cc)
 {
 	return cc->iomode;
