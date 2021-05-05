@@ -1,8 +1,9 @@
 #!/bin/bash -x
-SSL="bearssl"
+mypath=$(dirname $(readlink -f $0))
+#SSL="bearssl"
 #SSL="mbedtls"
 #SSL="wolfssl"
-#SSL="ssl"
+SSL="ssl"
 export LDFLAGS=-L$(pwd)/../build/lib -static
 export LIBS=-l${SSL}
 export CFLAGS=-static
@@ -52,3 +53,4 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 
 make curl_LDFLAGS=-all-static -j $(nproc) V=1
 make install
+cp  ${mypath}/lib/.libs/libcurl.a  ${mypath}/../build/lib/libcurl-${SSL}.a
