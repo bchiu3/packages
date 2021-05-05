@@ -7,3 +7,6 @@ CFLAGS=-O0 ./configure \
 	--enable-static \
 	--disable-shared \
 	--disable-asm
+
+make 
+make install
