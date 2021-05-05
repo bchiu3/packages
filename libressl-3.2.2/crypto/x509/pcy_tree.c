@@ -450,8 +450,8 @@ tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 			node = sk_X509_POLICY_NODE_value(nodes, i);
 			if (node->nchild == 0) {
 				node->parent->nchild--;
-				free(node);
 				(void)sk_X509_POLICY_NODE_delete(nodes, i);
+				free(node);
 			}
 		}
 		if (curr->anyPolicy && !curr->anyPolicy->nchild) {
