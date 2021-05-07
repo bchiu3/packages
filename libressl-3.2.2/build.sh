@@ -8,5 +8,5 @@ CFLAGS=-O0 ./configure \
 	--disable-shared \
 	--disable-asm
 
-make 
+make -j $(nproc) V=1
 make install
