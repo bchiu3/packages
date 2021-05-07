@@ -1,11 +1,11 @@
 #!/bin/bash -x
 mypath=$(dirname $(readlink -f $0))
-#SSL="bearssl"
-#SSL="mbedtls"
-#SSL="wolfssl"
-SSL="ssl"
+#CURL_SSL="bearssl"
+#CURL_SSL="mbedtls"
+#CURL_SSL="wolfssl"
+${CURL_SSL:="ssl"}
 export LDFLAGS=-L$(pwd)/../build/lib -static
-export LIBS=-l${SSL}
+export LIBS=-l${CURL_SSL}
 export CFLAGS=-static
 export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 ./configure --prefix=$(pwd)/../build \
@@ -48,9 +48,9 @@ export LT_SYS_LIBRARY_PATH=$(pwd)/../build/lib
 			--without-libidn \
 			--without-librtmp \
 			--disable-dnsshuffle \
-			--with-${SSL}=$(pwd)/../build \
+			--with-${CURL_SSL}=$(pwd)/../build \
 			--disable-verbose
 
 make curl_LDFLAGS=-all-static -j $(nproc) V=1
 make install
-cp  ${mypath}/lib/.libs/libcurl.a  ${mypath}/../build/lib/libcurl-${SSL}.a
+cp  ${mypath}/lib/.libs/libcurl.a  ${mypath}/../build/lib/libcurl-${CURL_SSL}.a
