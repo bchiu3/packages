@@ -144,5 +144,7 @@ clean:
 	fi
 
 install:
+	# remove all shared libraries
+	rm build/lib/*.so*
 	rsync -avz build/include/  $(DEST)/usr/include/
 	rsync -avz build/lib/      $(DEST)/usr/lib/
