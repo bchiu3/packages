@@ -84,6 +84,9 @@ uv:
 kcgi:
 	cd kcgi-0.12.3 && ./build.sh
 
+mhd:
+	cd libmicrohttpd-0.9.73 && ./build.sh
+
 opus:
 	cd opus-1.3.1 && ./build.sh
 
@@ -135,6 +138,9 @@ clean:
 	#bmake -C kcgi-0.12.3 distclean;
 	if [ -f pcre2-10.36/Makefile ]; then \
 		make -C pcre2-10.36 distclean; \
+	fi
+	if [ -f libmicrohttpd-0.9.73/Makefile ]; then \
+		make -C libmicrohttpd-0.9.73 distclean; \
 	fi
 
 install:
