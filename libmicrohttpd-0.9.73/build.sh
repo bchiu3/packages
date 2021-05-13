@@ -1,7 +1,6 @@
 #!/bin/bash -x
 env CFLAGS="-O0 -static" \
-LDFLAGS="-L/home/nwang/tmp/stensal-standard-2020_09_28/usr/lib" \
-LIBS="-static -lbearssl" \
+LIBS="-static" \
 ./configure --disable-https \
 	    --enable-static \
 	    --disable-shared \
@@ -12,6 +11,6 @@ LIBS="-static -lbearssl" \
 	    --disable-bauth \
 	    --disable-dauth \
 	    --with-pic=non-PIC \
-	    --enable-curl \
+	    --disable-curl \
 	    --enable-heavy-tests \
-        --disable-epoll
+      --disable-epoll
