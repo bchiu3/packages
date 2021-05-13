@@ -41,7 +41,12 @@ tiny-curl:
 	rm -rf build/lib/pkgconfig
 
 curl-ws:
-	make -C curl-websocket 
+	make -C curl-websocket
+
+pcre:
+	cd pcre2-10.36 && ./build.sh
+	rm -rf build/lib/libpcre2-*.la
+	rm -rf build/lib/pkgconfig
 
 zlib:
 	cd zlib-1.2.11 && ./build.sh
@@ -128,6 +133,9 @@ clean:
 		make -C libsodium-1.0.18 distclean; \
 	fi
 	#bmake -C kcgi-0.12.3 distclean;
+	if [ -f pcre2-10.36/Makefile ]; then \
+		make -C pcre2-10.36 distclean; \
+	fi
 
 install:
 	rsync -avz build/include/  $(DEST)/usr/include/
