@@ -2719,7 +2719,7 @@ libraries. They may no longer be around, but just in case, we can try to
 provide the same facility by this simple alternative function. */
 
 extern int   sys_nerr;
-extern char *sys_errlist[];
+extern const char *const sys_errlist[];
 
 char *
 strerror(int n)

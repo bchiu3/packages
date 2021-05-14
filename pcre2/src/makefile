@@ -1,11 +1,11 @@
-TARGET_EXEC = libpcre2.a
+TARGET = libpcre2.a
 CFLAGS += -DHAVE_CONFIG_H -DPCRE2_CODE_UNIT_WIDTH=8
 
 BUILD_DIR ?= ../build
 SRC_DIRS ?= ./src
 
 SRCS := pcre2_auto_possess.c \
-	     pcre2_chartables.c \
+       pcre2_chartables.c \
        pcre2_compile.c \
        pcre2_config.c \
        pcre2_context.c \
@@ -35,10 +35,17 @@ SRCS := pcre2_auto_possess.c \
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
 
-$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+$(BUILD_DIR)/$(TARGET): $(OBJS)
 	$(AR) rcs -o $@ $(OBJS)
+
+$(BUILD_DIR)/libpcre2posix.a: pcre2posix.c
+	$(CC) $(CFLAGS) -c -o $(BUILD_DIR)/libpcre2posix.o pcre2posix.c
+	$(AR) rcs -o $@ $(BUILD_DIR)/libpcre2posix.o
+
+pcre2test: pcre2test.c
+	$(CC) -I./ -DHAVE_CONFIG_H -DPCRE2_CODE_UNIT_WIDTH=0 -DSUPPORT_PCRE2_8 -o $(BUILD_DIR)/pcre2test \
+		pcre2test.c -L$(BUILD_DIR) -lpcre2 -lpcre2posix
 
 # c source
 $(BUILD_DIR)/%.c.o: %.c
@@ -46,6 +53,9 @@ $(BUILD_DIR)/%.c.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 .PHONY: clean
+
+all: $(BUILD_DIR)/$(TARGET) $(BUILD_DIR)/libpcre2posix.a
+
 
 clean:
 	$(RM) -r $(BUILD_DIR)
