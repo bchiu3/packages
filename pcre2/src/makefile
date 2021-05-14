@@ -34,7 +34,7 @@ SRCS := pcre2_auto_possess.c \
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-all: libpcre2.a libpcre2posix.a pcre2test
+all: libpcre2.a libpcre2posix.a | pcre2test
 
 libpcre2.a: $(OBJS)
 	$(AR) rcs -o $(BUILD_DIR)/$@ $(OBJS)
