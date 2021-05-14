@@ -119,7 +119,7 @@ sure both macros are undefined; an emulation function will then be used. */
 #define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
+#define HAVE_STRING_H 2
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 /* #undef HAVE_SYS_STAT_H */
@@ -131,7 +131,7 @@ sure both macros are undefined; an emulation function will then be used. */
 /* #undef HAVE_SYS_WAIT_H */
 
 /* Define to 1 if you have the <unistd.h> header file. */
-/* #undef HAVE_UNISTD_H */
+#define HAVE_UNISTD_H 1
 
 /* Define to 1 if the compiler supports simple visibility declarations. */
 /* #undef HAVE_VISIBILITY */
