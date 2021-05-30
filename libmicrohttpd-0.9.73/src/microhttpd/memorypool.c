@@ -226,8 +226,10 @@ MHD_pool_destroy (struct MemoryPool *pool)
 {
   if (NULL == pool)
     return;
-  if (MHD_pool_disable)
+  if (MHD_pool_disable) {
     free(pool);
+    return;
+  }
 
   mhd_assert (pool->end >= pool->pos);
   mhd_assert (pool->size >= pool->end - pool->pos);
