@@ -153,7 +153,7 @@ MHD_pool_create (size_t max)
   size_t alloc_size;
 
   if (MHD_pool_disable) {
-    pool = malloc(sizeof *p);
+    pool = malloc(sizeof *pool);
     pool->size = ROUND_TO_ALIGN (max);
      return NULL;
   }
