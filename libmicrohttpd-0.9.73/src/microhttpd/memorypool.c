@@ -87,7 +87,6 @@ int MHD_pool_disable = 0;
 void
 MHD_init_mem_pools_ (void)
 {
-  if (MHD_pool_disable) return;
 #ifdef MHD_SC_PAGESIZE
   long result;
   result = sysconf (MHD_SC_PAGESIZE);
@@ -155,7 +154,7 @@ MHD_pool_create (size_t max)
   if (MHD_pool_disable) {
     pool = malloc(sizeof *pool);
     pool->size = ROUND_TO_ALIGN (max);
-     return NULL;
+    return pool;
   }
 
   mhd_assert (max > 0);
