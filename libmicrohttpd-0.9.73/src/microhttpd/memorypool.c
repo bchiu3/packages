@@ -78,12 +78,16 @@
  */
 static size_t MHD_sys_page_size_ = MHD_DEF_PAGE_SIZE_; /* Default fallback value */
 
+
+int MHD_pool_disable = 0;
+
 /**
  * Initialise values for memory pools
  */
 void
 MHD_init_mem_pools_ (void)
 {
+  if (MHD_pool_disable) return;
 #ifdef MHD_SC_PAGESIZE
   long result;
   result = sysconf (MHD_SC_PAGESIZE);
@@ -147,6 +151,12 @@ MHD_pool_create (size_t max)
 {
   struct MemoryPool *pool;
   size_t alloc_size;
+
+  if (MHD_pool_disable) {
+    pool = malloc(sizeof *p);
+    pool->size = ROUND_TO_ALIGN (max);
+     return NULL;
+  }
 
   mhd_assert (max > 0);
   alloc_size = 0;
@@ -217,6 +227,8 @@ MHD_pool_destroy (struct MemoryPool *pool)
 {
   if (NULL == pool)
     return;
+  if (MHD_pool_disable)
+    free(pool);
 
   mhd_assert (pool->end >= pool->pos);
   mhd_assert (pool->size >= pool->end - pool->pos);
@@ -246,6 +258,9 @@ MHD_pool_destroy (struct MemoryPool *pool)
 size_t
 MHD_pool_get_free (struct MemoryPool *pool)
 {
+  if (MHD_pool_disable)
+    return pool->size;
+
   mhd_assert (pool->end >= pool->pos);
   mhd_assert (pool->size >= pool->end - pool->pos);
   return (pool->end - pool->pos);
@@ -268,6 +283,7 @@ MHD_pool_allocate (struct MemoryPool *pool,
                    size_t size,
                    bool from_end)
 {
+  if (MHD_pool_disable) return malloc(size);
   void *ret;
   size_t asize;
 
@@ -316,6 +332,7 @@ MHD_pool_reallocate (struct MemoryPool *pool,
                      size_t old_size,
                      size_t new_size)
 {
+  if (MHD_pool_disable) return realloc(old, new_size);
   size_t asize;
   uint8_t *new_blc;
 
@@ -328,6 +345,7 @@ MHD_pool_reallocate (struct MemoryPool *pool,
   /* Blocks "from the end" must not be reallocated */
   mhd_assert (old == NULL || old_size == 0 || \
               pool->memory + pool->pos > (uint8_t*) old);
+
 
   if (0 != old_size)
   {   /* Need to save some data */
@@ -394,6 +412,13 @@ MHD_pool_reset (struct MemoryPool *pool,
                 size_t copy_bytes,
                 size_t new_size)
 {
+  if (MHD_pool_disable) {
+    char *new_memory = malloc(new_size);
+    if (NULL != keep && 0 != copy_bytes)
+      memcpy(new_memory, keep, copy_bytes);
+    return new_memory;
+  }
+
   mhd_assert (pool->end >= pool->pos);
   mhd_assert (pool->size >= pool->end - pool->pos);
   mhd_assert (copy_bytes < new_size);
