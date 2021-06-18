@@ -1,9 +1,9 @@
 #!/bin/bash -x
 mypath=$(dirname $(readlink -f $0))
-#CURL_SSL="bearssl"
+CURL_SSL="bearssl"
 #CURL_SSL="mbedtls"
 #CURL_SSL="wolfssl"
-${CURL_SSL:="ssl"}
+#${CURL_SSL:="ssl"}
 export LDFLAGS=-L$(pwd)/../build/lib -static
 export LIBS=-l${CURL_SSL}
 export CFLAGS=-static
