@@ -93,6 +93,9 @@ opus:
 sodium:
 	cd libsodium-1.0.18 && ./build.sh
 
+json-c:
+	cd json-c-0.15 && ./build.sh
+
 clean:
 	rm -rf build
 	make -C bearssl-0.6 clean

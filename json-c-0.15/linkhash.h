@@ -21,6 +21,8 @@
 
 #include "json_object.h"
 
+#define PRECISE_MEMORY_ACCESS 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
