@@ -5,6 +5,6 @@ pushd $mypath/build
 cmake -DBUILD_SHARED_LIBS=OFF \
 	  -DCMAKE_INSTALL_PREFIX=${mypath}/../build \
 	  ../
-make all install
+make -j$(nproc) all install
 popd
 
