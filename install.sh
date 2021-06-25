@@ -2,8 +2,8 @@
 set -e
 set -o pipefail
 if [ -z ${DEST} ]; then
-  S=$(dirname $(which saphc-c))
-  DEST=${S%%/saphc/bin}
+  S=$(dirname $(which stensal-c))
+  DEST=${S%%/stensal/bin}
 fi
 echo "install to ${DEST}"
 
