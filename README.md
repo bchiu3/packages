@@ -3,14 +3,14 @@ This repo contains C/C++ libraries that have been compiled with SaiphC compilers
 
 1. Check the installation folder of saiph-c is added to PATH
 ```
-which saiph-c
+which sfc-c
 ```
 It should print out the correct path for saiph-c.
 
 
-2. To build with saiph-c/saiph-c++
+2. To build with saiph-c compilers
 ```
-CC=saiph-c CXX=saiph-c++ make
+CC=sfc CXX=sfc++ make
 ```
 
 3. To install third party libraries 
