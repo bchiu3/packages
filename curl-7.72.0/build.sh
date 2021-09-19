@@ -1,6 +1,6 @@
 #!/bin/bash -x
 mypath=$(dirname $(readlink -f $0))
-CURL_SSL="bearssl"
+: "${CURL_SSL:="bearssl"}"
 #CURL_SSL="mbedtls"
 #CURL_SSL="wolfssl"
 #${CURL_SSL:="ssl"}
