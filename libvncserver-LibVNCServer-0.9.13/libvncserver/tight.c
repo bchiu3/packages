@@ -58,7 +58,7 @@
  * per-client data.
  */
 #if defined(__GNUC__)
-#define TLS __thread
+#define TLS
 #elif defined(_MSC_VER)
 #define TLS __declspec(thread)
 #else
